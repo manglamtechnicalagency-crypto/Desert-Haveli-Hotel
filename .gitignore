@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+
+# Local QA screenshots generated during visual checks
+qa-*.png
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
