@@ -7,6 +7,8 @@ export const hotel = {
   email: "deserthaveliguesthouse@gmail.com",
   address:
     "National monument, the Golden Fort, near Jain Temple, Tewata Para, inside fort, Jaisalmer, Rajasthan, India",
+  mapsUrl: "https://www.google.com/maps/search/?api=1&query=Desert%20Haveli%20Guest%20House%20Jaisalmer",
+  mapsEmbedUrl: "https://www.google.com/maps?q=Desert%20Haveli%20Guest%20House%20Jaisalmer&output=embed",
   whatsappBase: "https://wa.me/917568455656",
   emailSubject: "Room Booking Enquiry - Desert Haveli Guest House"
 };
@@ -38,7 +40,16 @@ export const images = {
   demoHakam: "/assets/demo-hakam-queen-room.jpg",
   rooftopRestaurant: "/assets/rooftop-restaurant.jpg",
   rajasthaniThali: "/assets/rajasthani-thali.jpg",
-  kerSangri: "/assets/ker-sangri.jpg"
+  kerSangri: "/assets/ker-sangri.jpg",
+  jaisalmerFortView: "/assets/jaisalmer-fort-view.jpg",
+  jainTemples: "/assets/haveli-interior.jpg",
+  patwonHaveli: "/assets/golden-fort-exterior.jpg",
+  gadisarLake: "/assets/jaisalmer-fort-view.jpg",
+  samSandDunes: "/assets/sunset-terrace.jpg",
+  localFortMarket: "/assets/jaisalmer-street-life.jpg",
+  badaBagh: "/assets/golden-fort-exterior.jpg",
+  kuldhara: "/assets/sunset-terrace.jpg",
+  woodFossilPark: "/assets/jaisalmer-fort-view.jpg"
 };
 
 export const rooms = [
@@ -161,15 +172,15 @@ export const safariServices = [
 ];
 
 export const attractions = [
-  ["Jaisalmer Fort / Sonar Quila", "Popularly known as Sonar Quila, Jaisalmer Fort dominates the skyline of the golden city. Built in 1156 AD by Rawal Jaisal, the fort is one of Rajasthan's oldest living forts.", images.exterior],
-  ["Jain Temples", "Historic temple architecture within walking proximity of the guesthouse near the Jain Temple area.", images.interior],
-  ["Patwon Ki Haveli", "One of Jaisalmer's grandest mansions and an open-air masterpiece of stone carving, known for carved balconies and sandstone shadows.", images.fortView],
-  ["Gadisar Lake", "Built in 1156 AD and later rebuilt in 1367 AD, Gadisar Lake is a peaceful picnic spot known for calm water and winter migratory birds.", images.sunset],
-  ["Sam Sand Dunes", "A classic desert excursion area for dune sunsets and safari enquiries available on request.", images.street],
-  ["Local Fort Market", "Traditional lanes, textiles, handicrafts, cafes, and everyday life inside the fort.", images.hero],
-  ["Bada Bagh / Bara Bagh", "Known for cenotaphs built in memory of Jaisalmer's rulers, surrounded by trees and desert landscapes.", images.rooftopRestaurant],
-  ["Kuldhara and Khaba", "Deserted village routes can be explored with local travel guidance. Charges may apply.", images.rajasthaniThali],
-  ["Wood Fossil Park", "Near Akal on the Barmer Road, the park offers a glimpse into the Jurassic period with fossilised trees.", images.fortView]
+  ["Jaisalmer Fort / Sonar Quila", "Popularly known as Sonar Quila, Jaisalmer Fort dominates the skyline of the golden city. Built in 1156 AD by Rawal Jaisal, the fort is one of Rajasthan's oldest living forts.", images.jaisalmerFortView || images.exterior],
+  ["Jain Temples", "Historic temple architecture within walking proximity of the guesthouse near the Jain Temple area.", images.jainTemples || images.interior],
+  ["Patwon Ki Haveli", "One of Jaisalmer's grandest mansions and an open-air masterpiece of stone carving, known for carved balconies and sandstone shadows.", images.patwonHaveli || images.fortView],
+  ["Gadisar Lake", "Built in 1156 AD and later rebuilt in 1367 AD, Gadisar Lake is a peaceful picnic spot known for calm water and winter migratory birds.", images.gadisarLake || images.sunset],
+  ["Sam Sand Dunes", "A classic desert excursion area for dune sunsets and safari enquiries available on request.", images.samSandDunes || images.street],
+  ["Local Fort Market", "Traditional lanes, textiles, handicrafts, cafes, and everyday life inside the fort.", images.localFortMarket || images.hero],
+  ["Bada Bagh / Bara Bagh", "Known for cenotaphs built in memory of Jaisalmer's rulers, surrounded by trees and desert landscapes.", images.badaBagh || images.rooftopRestaurant],
+  ["Kuldhara and Khaba", "Deserted village routes can be explored with local travel guidance. Charges may apply.", images.kuldhara || images.rajasthaniThali],
+  ["Wood Fossil Park", "Near Akal on the Barmer Road, the park offers a glimpse into the Jurassic period with fossilised trees.", images.woodFossilPark || images.fortView]
 ];
 
 export const faqs = [

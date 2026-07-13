@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { createRoot } from "react-dom/client";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import {
   attractions,
   basicFacilities,
@@ -10,10 +9,14 @@ import {
   requestFacilities,
   restaurantHighlights,
   reviews,
-  rooms,
   safariServices,
   services
 } from "./data";
+import { fetchPublicRooms, publicImageUrl } from "./lib/roomsApi";
+import { formatCurrency, getTodayPrice } from "./lib/pricing";
+import { fetchPublicSiteImages, siteImageUrl } from "./lib/siteImages";
+import { fetchPublicSections, sectionContent } from "./lib/siteContent";
+import { fetchPublicGalleryImages, galleryImageUrl } from "./lib/siteGallery";
 import "./styles.css";
 
 const navItems = [
@@ -38,6 +41,10 @@ function whatsappUrl(message = bookingText) {
 
 function emailUrl(message = bookingText) {
   return `mailto:${hotel.email}?subject=${encodeURIComponent(hotel.emailSubject)}&body=${encodeURIComponent(message)}`;
+}
+
+function sectionText(key, field, fallback) {
+  return sectionContent[key]?.[field] || fallback;
 }
 
 function Icon({ children }) {
@@ -91,30 +98,21 @@ function Navbar() {
 }
 
 function Hero() {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 600], [0, 120]);
   return (
     <section className="hero" id="home">
-      <motion.video
-        style={{ y }}
+      <img
         className="hero-bg"
-        poster={images.hero}
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-label="Desert Haveli Guest House Jaisalmer heritage video"
-      >
-        <source src="/assets/hero-desert-haveli-video.mp4" type="video/mp4" />
-      </motion.video>
+        src={images.hero}
+        alt="Golden sandstone arches at Desert Haveli Guest House inside Jaisalmer Fort"
+        fetchPriority="high"
+      />
       <div className="hero-overlay"></div>
       <div className="hero-content">
         <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          Stay Inside the Living Golden Fort of Jaisalmer
+          {sectionText("hero", "title", "Stay Inside the Living Golden Fort of Jaisalmer")}
         </motion.h1>
         <motion.p initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.8 }}>
-          Experience 450 years of heritage, royal haveli rooms, rooftop dining, desert views, and authentic Jaisalmer hospitality.
+          {sectionText("hero", "short_description", "Experience 450 years of heritage, royal haveli rooms, rooftop dining, desert views, and authentic Jaisalmer hospitality.")}
         </motion.p>
         <div className="hero-actions">
           <a className="btn primary" data-cta="whatsapp-booking" href={whatsappUrl()} target="_blank" rel="noreferrer">Book on WhatsApp</a>
@@ -131,8 +129,8 @@ function Hero() {
   );
 }
 
-function BookingBar() {
-  const [form, setForm] = useState({ checkin: "", checkout: "", guests: "", room: "Heritage Prince Room" });
+function BookingBar({ rooms }) {
+  const [form, setForm] = useState({ checkin: "", checkout: "", guests: "", room: rooms[0]?.name || "" });
   const [compact, setCompact] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });
@@ -154,6 +152,11 @@ function BookingBar() {
   }, []);
 
   React.useEffect(() => {
+    if (!form.room && rooms.length > 0) setForm((f) => ({ ...f, room: rooms[0].name }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rooms]);
+
+  React.useEffect(() => {
     document.body.classList.toggle("booking-expanded", compact && expanded);
     return () => document.body.classList.remove("booking-expanded");
   }, [compact, expanded]);
@@ -161,7 +164,7 @@ function BookingBar() {
   return (
     <section className={`booking-bar ${compact && !expanded ? "capsule" : ""}`} aria-label="Quick booking enquiry">
       {compact && !expanded ? (
-        <button className="booking-capsule" type="button" onClick={() => setExpanded(true)}>
+        <button className="booking-capsule" type="button" aria-expanded={expanded} onClick={() => setExpanded(true)}>
           <span>Check dates</span>
           <strong>Book Direct</strong>
         </button>
@@ -198,8 +201,8 @@ function Showcase() {
   return (
     <section className="section showcase">
       <Reveal>
-        <SectionTitle title="A Haveli Stay Framed by Golden Stone">
-          Real hotel photos, heritage details, and warm direct hospitality create the atmosphere of a boutique stay inside the fort.
+        <SectionTitle title={sectionText("haveli-stay", "title", "A Haveli Stay Framed by Golden Stone")}>
+          {sectionText("haveli-stay", "short_description", "Real hotel photos, heritage details, and warm direct hospitality create the atmosphere of a boutique stay inside the fort.")}
         </SectionTitle>
       </Reveal>
       <div className="showcase-grid">
@@ -257,8 +260,8 @@ function Restaurant() {
   return (
     <section className="section restaurant" id="restaurant">
       <Reveal>
-        <SectionTitle title="Rooftop Restaurant with Sweeping Views of Jaisalmer">
-          Enjoy fresh, hygienic Rajasthani and Indian food from our rooftop restaurant while experiencing panoramic views of Jaisalmer's Golden Fort, old city streets, and desert skyline.
+        <SectionTitle title={sectionText("rooftop-restaurant", "title", "Rooftop Restaurant with Sweeping Views of Jaisalmer")}>
+          {sectionText("rooftop-restaurant", "short_description", "Enjoy fresh, hygienic Rajasthani and Indian food from our rooftop restaurant while experiencing panoramic views of Jaisalmer's Golden Fort, old city streets, and desert skyline.")}
         </SectionTitle>
       </Reveal>
       <div className="restaurant-grid">
@@ -289,8 +292,8 @@ function Facilities() {
   return (
     <section className="section facilities" id="facilities">
       <Reveal>
-        <SectionTitle title="Hotel Facilities">
-          We provide essential guest facilities for a comfortable heritage stay. Some services are included, while selected travel, food, pickup, and personal services may be chargeable or available on request.
+        <SectionTitle title={sectionText("hotel-facilities", "title", "Hotel Facilities")}>
+          {sectionText("hotel-facilities", "short_description", "We provide essential guest facilities for a comfortable heritage stay. Some services are included, while selected travel, food, pickup, and personal services may be chargeable or available on request.")}
         </SectionTitle>
       </Reveal>
       <div className="facility-columns">
@@ -331,49 +334,183 @@ function Safari() {
   );
 }
 
+function RoomGallery({ images: roomImages, roomName }) {
+  const [index, setIndex] = useState(0);
+  const touchStartX = React.useRef(null);
+  const galleryRef = React.useRef(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [manualRevision, setManualRevision] = useState(0);
+  const imageCount = roomImages?.length || 0;
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (imageCount < 2 || !galleryRef.current || typeof IntersectionObserver === "undefined") return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0.2 }
+    );
+    observer.observe(galleryRef.current);
+    return () => observer.disconnect();
+  }, [imageCount]);
+
+  useEffect(() => {
+    setIndex((current) => Math.min(current, Math.max(imageCount - 1, 0)));
+  }, [imageCount]);
+
+  useEffect(() => {
+    if (imageCount < 2 || prefersReducedMotion || !isVisible || isPaused) return undefined;
+    const timer = window.setTimeout(() => {
+      setIndex((current) => (current + 1) % imageCount);
+    }, 3000);
+    return () => window.clearTimeout(timer);
+  }, [imageCount, index, isPaused, isVisible, manualRevision, prefersReducedMotion]);
+
+  if (imageCount === 0) {
+    return (
+      <div className="room-gallery empty" role="img" aria-label={`No photos yet for ${roomName}`}>
+        <span>Photos coming soon</span>
+      </div>
+    );
+  }
+
+  const restartAutoSlide = () => setManualRevision((revision) => revision + 1);
+  const go = (delta) => {
+    restartAutoSlide();
+    setIndex((i) => (i + delta + imageCount) % imageCount);
+  };
+
+  return (
+    <div
+      ref={galleryRef}
+      className="room-gallery"
+      role="group"
+      aria-roledescription="carousel"
+      aria-label={`${roomName} photos`}
+      tabIndex={0}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setIsPaused(false);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "ArrowRight") {
+          e.preventDefault();
+          go(1);
+        }
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          go(-1);
+        }
+      }}
+      onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+      onTouchEnd={(e) => {
+        if (touchStartX.current == null) return;
+        const delta = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(delta) > 40) go(delta < 0 ? 1 : -1);
+        touchStartX.current = null;
+      }}
+    >
+      <img
+        loading="lazy"
+        src={publicImageUrl(roomImages[index].storage_path)}
+        alt={roomImages[index].alt_text || `${roomName} photo ${index + 1} of ${roomImages.length}`}
+      />
+      {imageCount > 1 && (
+        <>
+          <button type="button" className="gallery-nav prev" aria-label="Previous photo" onClick={() => go(-1)}>‹</button>
+          <button type="button" className="gallery-nav next" aria-label="Next photo" onClick={() => go(1)}>›</button>
+          <div className="gallery-dots" role="tablist" aria-label={`${roomName} photo selector`}>
+            {roomImages.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Show photo ${i + 1}`}
+                className={i === index ? "active" : ""}
+                onClick={() => {
+                  restartAutoSlide();
+                  setIndex(i);
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function RoomCard({ room }) {
   const message = `Hello Desert Haveli Guest House,\nI want to enquire about the ${room.name}.\n\nCheck-in:\nCheck-out:\nGuests:\n\nPlease confirm availability and final price.`;
+  const priced = getTodayPrice(room, room.room_price_overrides, room.room_pricing_rules);
+  const priceLabel =
+    priced.price != null
+      ? `${formatCurrency(priced.price, room.currency)} / night`
+      : room.public_availability_message || "Enquire for price";
+  const canBook = room.is_bookable && room.availability_status === "available";
+
   return (
     <article className="room-card tilt">
-      <img loading="lazy" src={room.image} alt={`${room.name} at Desert Haveli Guest House Jaisalmer`} />
+      <RoomGallery images={room.room_images} roomName={room.name} />
       <div>
         <h3>{room.name}</h3>
-        <strong>{room.price}</strong>
-        <p>{room.description}</p>
-        <ul>{room.features.slice(0, 4).map((feature) => <li key={feature}>{feature}</li>)}</ul>
+        <strong>{priceLabel}</strong>
+        <p>{room.short_description}</p>
+        <ul>
+          {(room.room_features || []).slice(0, 4).map((feature) => (
+            <li key={feature.id}>{feature.name}</li>
+          ))}
+        </ul>
+        {!canBook && (
+          <p className="room-status-note" data-status={room.availability_status}>
+            {room.availability_status === "available" ? "Not currently bookable" : (room.availability_status || "unavailable").replace(/_/g, " ")}
+          </p>
+        )}
         <div className="card-actions">
           <a className="btn small ghost-light" href="#gallery">View Gallery</a>
-          <a className="btn small primary" data-cta="room-booking" href={whatsappUrl(message)} target="_blank" rel="noreferrer">Book Now</a>
+          <a
+            className="btn small primary"
+            data-cta="room-booking"
+            href={whatsappUrl(message)}
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!canBook}
+          >
+            {canBook ? "Book Now" : "Enquire"}
+          </a>
         </div>
       </div>
     </article>
   );
 }
 
-function Rooms() {
+function Rooms({ rooms, loading, error }) {
   return (
     <section className="section rooms" id="rooms">
       <Reveal>
-        <SectionTitle title="Heritage Rooms Inside Jaisalmer Fort">
-          Choose a traditional or modern heritage room and enquire directly with the hotel for availability and final confirmation.
+        <SectionTitle title={sectionText("heritage-rooms", "title", "Heritage Rooms Inside Jaisalmer Fort")}>
+          {sectionText("heritage-rooms", "short_description", "Choose a traditional or modern heritage room and enquire directly with the hotel for availability and final confirmation.")}
         </SectionTitle>
       </Reveal>
-      <div className="rooms-grid">{rooms.map((room) => <Reveal key={room.name}><RoomCard room={room} /></Reveal>)}</div>
-      <Reveal className="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Room Name</th><th>Starting Price</th><th>Style</th><th>Best For</th><th>View / Highlight</th><th>CTA</th></tr>
-          </thead>
-          <tbody>
-            {rooms.map((room) => (
-              <tr key={room.name}>
-                <td>{room.name}</td><td>{room.price}</td><td>{room.style}</td><td>{room.bestFor}</td><td>{room.highlight}</td>
-                <td><a data-cta="room-booking" href={whatsappUrl(`Hello Desert Haveli Guest House,\nI want to enquire about the ${room.name}.\n\nCheck-in:\nCheck-out:\nGuests:\n\nPlease confirm availability and final price.`)} target="_blank" rel="noreferrer">Enquire</a></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Reveal>
+
+      {loading && <p className="asset-note">Loading rooms…</p>}
+      {error && <p className="asset-note">Rooms could not be loaded right now. Please contact the hotel directly.</p>}
+      {!loading && !error && rooms.length === 0 && <p className="asset-note">Room listings are being updated. Please check back shortly.</p>}
+
+      {!loading && !error && rooms.length > 0 && (
+        <div className="rooms-grid">{rooms.map((room) => <Reveal key={room.id}><RoomCard room={room} /></Reveal>)}</div>
+      )}
     </section>
   );
 }
@@ -400,7 +537,7 @@ function Experiences() {
   );
 }
 
-function Gallery() {
+function Gallery({ uploadedImages = [] }) {
   const [filter, setFilter] = useState("All");
   const [active, setActive] = useState(null);
   const gallery = [
@@ -418,14 +555,16 @@ function Gallery() {
     ["Interior", images.street, "Jaisalmer fort street life"],
     ["Rooms", images.demoPrincess, "Jaisalmer-themed demo premium heritage room"]
   ];
-  const tabs = ["All", "Rooms", "Restaurant", "Fort View", "Interior", "Exterior", "Jaisalmer"];
-  const filtered = filter === "All" ? gallery : gallery.filter(([type]) => type === filter);
+  const tabs = ["All", ...new Set(["Rooms", "Restaurant", "Fort View", "Interior", "Exterior", "Jaisalmer", ...uploaded.map(([type]) => type)])];
+  const uploaded = uploadedImages.map((item) => [item.category || "Rooms", galleryImageUrl(item.storage_path), item.alt_text || item.title || "Gallery image"]);
+  const allGallery = [...gallery, ...uploaded];
+  const filtered = filter === "All" ? allGallery : allGallery.filter(([type]) => type === filter);
 
   return (
     <section className="section gallery" id="gallery">
       <Reveal>
-        <SectionTitle title="Room Gallery">
-          Browse the visual story of the fort, interiors, city views, and haveli atmosphere.
+        <SectionTitle title={sectionText("room-gallery", "title", "Gallery")}>
+          {sectionText("room-gallery", "short_description", "Browse the visual story of the fort, interiors, city views, and haveli atmosphere.")}
         </SectionTitle>
       </Reveal>
       <div className="tabs" role="tablist" aria-label="Gallery filters">
@@ -452,11 +591,11 @@ function Gallery() {
 
 function Story() {
   const blocks = [
-    ["Morning Inside the Fort", images.exterior],
-    ["Heritage Room Details", images.heritage],
-    ["Golden Sunset View", images.sunset],
-    ["Traditional Haveli Ambience", images.interior],
-    ["Jaisalmer Street Life", images.street]
+    [sectionText("morning-inside-fort", "title", "Morning Inside the Fort"), images.exterior],
+    [sectionText("heritage-room-details", "title", "Heritage Room Details"), images.heritage],
+    [sectionText("golden-sunset-view", "title", "Golden Sunset View"), images.sunset],
+    [sectionText("traditional-haveli-ambience", "title", "Traditional Haveli Ambience"), images.interior],
+    [sectionText("jaisalmer-street-life", "title", "Jaisalmer Street Life"), images.street]
   ];
   return (
     <section className="story-strip">
@@ -471,17 +610,28 @@ function Story() {
 }
 
 function Nearby() {
+  const attractionImageKeys = {
+    "Jaisalmer Fort / Sonar Quila": "jaisalmerFortView",
+    "Jain Temples": "jainTemples",
+    "Patwon Ki Haveli": "patwonHaveli",
+    "Gadisar Lake": "gadisarLake",
+    "Sam Sand Dunes": "samSandDunes",
+    "Local Fort Market": "localFortMarket",
+    "Bada Bagh / Bara Bagh": "badaBagh",
+    "Kuldhara and Khaba": "kuldhara",
+    "Wood Fossil Park": "woodFossilPark"
+  };
   return (
     <section className="section nearby" id="explore">
       <Reveal>
-        <SectionTitle title="Explore Jaisalmer">
-          The hotel is a heritage base for Jaisalmer Fort, havelis, Jain temples, desert villages, dunes, local markets, and city walks.
+        <SectionTitle title={sectionText("explore-jaisalmer", "title", "Explore Jaisalmer")}>
+          {sectionText("explore-jaisalmer", "short_description", "The hotel is a heritage base for Jaisalmer Fort, havelis, Jain temples, desert villages, dunes, local markets, and city walks.")}
         </SectionTitle>
       </Reveal>
       <div className="nearby-grid">
         {attractions.map(([name, text, src]) => (
           <Reveal className="attraction" key={name}>
-            <img loading="lazy" src={src} alt={`${name} near Desert Haveli Guest House Jaisalmer`} />
+            <img loading="lazy" src={images[attractionImageKeys[name]] || src} alt={`${name} near Desert Haveli Guest House Jaisalmer`} />
             <h3>{name}</h3>
             <p>{text}</p>
             <small>Distance/time: please confirm locally</small>
@@ -493,29 +643,52 @@ function Nearby() {
   );
 }
 
-function BookingForm() {
+function BookingForm({ rooms }) {
   const initial = { name: "", phone: "", email: "", checkin: "", checkout: "", guests: "", room: "", service: "Room Booking", message: "" };
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });
   const enquiryMessage = useMemo(() => `Hello Desert Haveli Guest House,\nI want to enquire about booking.\n\nName: ${form.name}\nPhone: ${form.phone}\nEmail: ${form.email}\nCheck-in: ${form.checkin}\nCheck-out: ${form.checkout}\nGuests: ${form.guests}\nPreferred Room: ${form.room}\nService Interest: ${form.service}\nMessage: ${form.message}\n\nPlease confirm availability and price.`, [form]);
 
   const validate = () => {
     const next = {};
-    ["name", "phone", "guests"].forEach((key) => {
-      if (!form[key]) next[key] = "Required";
+    ["name", "phone"].forEach((key) => {
+      if (!form[key] || !form[key].trim()) next[key] = "Required";
     });
+
+    // Guest count: must be a positive integer, no 0, negatives, decimals, or non-numeric input.
+    const guestsRaw = form.guests;
+    if (guestsRaw === "" || guestsRaw === null || guestsRaw === undefined) {
+      next.guests = "Required";
+    } else if (!/^\d+$/.test(String(guestsRaw))) {
+      next.guests = "Enter a whole number of guests";
+    } else if (Number(guestsRaw) < 1) {
+      next.guests = "At least 1 guest is required";
+    }
+
     if (form.service === "Room Booking") {
       ["checkin", "checkout", "room"].forEach((key) => {
         if (!form[key]) next[key] = "Required";
       });
+      if (form.checkin && form.checkout && form.checkout <= form.checkin) {
+        next.checkout = "Check-out must be after check-in";
+      }
     }
     setErrors(next);
     return Object.keys(next).length === 0;
   };
   const open = (type) => {
+    if (submitting) return; // prevent duplicate submission from a double-click
     if (!validate()) return;
-    window.open(type === "whatsapp" ? whatsappUrl(enquiryMessage) : emailUrl(enquiryMessage), type === "whatsapp" ? "_blank" : "_self");
+    setSubmitting(true);
+    try {
+      window.open(type === "whatsapp" ? whatsappUrl(enquiryMessage) : emailUrl(enquiryMessage), type === "whatsapp" ? "_blank" : "_self");
+      setSubmitted(true);
+    } finally {
+      setTimeout(() => setSubmitting(false), 1200);
+    }
   };
 
   return (
@@ -527,22 +700,38 @@ function BookingForm() {
       </Reveal>
       <Reveal className="booking-form">
         {[
-          ["name", "Full Name", "text"],
-          ["phone", "Phone / WhatsApp Number", "tel"],
-          ["email", "Email", "email"],
-          ["checkin", "Check-in Date", "date"],
-          ["checkout", "Check-out Date", "date"],
-          ["guests", "Number of Guests", "number"]
-        ].map(([name, label, type]) => (
-          <label key={name}>{label}<input name={name} type={type} min={type === "number" ? "1" : undefined} value={form[name]} onChange={update} />{errors[name] && <small>{errors[name]}</small>}</label>
+          ["name", "Full Name", "text", true],
+          ["phone", "Phone / WhatsApp Number", "tel", true],
+          ["email", "Email", "email", false],
+          ["checkin", "Check-in Date", "date", form.service === "Room Booking"],
+          ["checkout", "Check-out Date", "date", form.service === "Room Booking"],
+          ["guests", "Number of Guests", "number", true]
+        ].map(([name, label, type, isRequired]) => (
+          <label key={name}>
+            {label}{isRequired && <span aria-hidden="true"> *</span>}
+            <input
+              name={name}
+              type={type}
+              required={isRequired}
+              min={type === "number" ? 1 : undefined}
+              step={type === "number" ? 1 : undefined}
+              inputMode={type === "number" ? "numeric" : undefined}
+              pattern={type === "number" ? "[0-9]*" : undefined}
+              value={form[name]}
+              onChange={update}
+              aria-invalid={Boolean(errors[name])}
+              aria-describedby={errors[name] ? `${name}-error` : undefined}
+            />
+            {errors[name] && <small id={`${name}-error`} role="alert">{errors[name]}</small>}
+          </label>
         ))}
-        <label>Preferred Room
-          <select name="room" value={form.room} onChange={update}>
+        <label>Preferred Room{form.service === "Room Booking" && <span aria-hidden="true"> *</span>}
+          <select name="room" required={form.service === "Room Booking"} value={form.room} onChange={update}>
             <option value="">Select room</option>
             {rooms.map((room) => <option key={room.name}>{room.name}</option>)}
             <option>Not Sure / Suggest Best Available Room</option>
           </select>
-          {errors.room && <small>{errors.room}</small>}
+          {errors.room && <small role="alert">{errors.room}</small>}
         </label>
         <label>Service Interest
           <select name="service" value={form.service} onChange={update}>
@@ -550,9 +739,10 @@ function BookingForm() {
           </select>
         </label>
         <label className="full">Message<textarea name="message" rows="5" value={form.message} onChange={update} placeholder="Share arrival time, room preference, or any special request." /></label>
+        {submitted && <p className="full admin-form-success" role="status">Enquiry opened — please complete sending it in WhatsApp/email.</p>}
         <div className="form-actions full">
-          <button className="btn primary" data-cta="whatsapp-booking" type="button" onClick={() => open("whatsapp")}>Send Enquiry on WhatsApp</button>
-          <button className="btn secondary" data-cta="email-enquiry" type="button" onClick={() => open("email")}>Send Email Enquiry</button>
+          <button className="btn primary" data-cta="whatsapp-booking" type="button" disabled={submitting} onClick={() => open("whatsapp")}>Send Enquiry on WhatsApp</button>
+          <button className="btn secondary" data-cta="email-enquiry" type="button" disabled={submitting} onClick={() => open("email")}>Send Email Enquiry</button>
         </div>
       </Reveal>
       <Timeline />
@@ -587,8 +777,8 @@ function ReviewsTrust() {
   return (
     <section className="section trust">
       <Reveal>
-        <SectionTitle title="Guest Experiences">
-          Selected guest experiences are presented without unverified star ratings.
+        <SectionTitle title={sectionText("guest-experiences", "title", "Guest Experiences")}>
+          {sectionText("guest-experiences", "short_description", "Selected guest experiences are presented without unverified star ratings.")}
         </SectionTitle>
       </Reveal>
       <div className="review-grid">
@@ -611,8 +801,8 @@ function Contact() {
   return (
     <section className="section contact" id="contact">
       <Reveal>
-        <SectionTitle title="Contact The Desert Haveli Guest House Jaisalmer">
-          The guesthouse is located inside Jaisalmer Fort near the Jain Temple area. Guests can contact the hotel on arrival for final walking guidance inside the fort.
+        <SectionTitle title={sectionText("contact", "title", "Contact The Desert Haveli Guest House Jaisalmer")}>
+          {sectionText("contact", "short_description", "The guesthouse is located inside Jaisalmer Fort near the Jain Temple area. Guests can contact the hotel on arrival for final walking guidance inside the fort.")}
         </SectionTitle>
       </Reveal>
       <div className="contact-grid">
@@ -627,11 +817,17 @@ function Contact() {
             <a className="btn secondary" data-cta="email-enquiry" href={emailUrl()}>Direct Email</a>
           </div>
         </Reveal>
-        <Reveal className="map-card" aria-label="Google map placeholder">
-          <div>
-            <strong>Google Map Embed</strong>
-            <span>Open the hotel location in Google Maps.</span>
-            <a className="btn primary" href="https://www.google.com/maps/search/?api=1&query=Desert%20Haveli%20Guest%20House%20Jaisalmer" target="_blank" rel="noreferrer">Open Location in Google Maps</a>
+        <Reveal className="map-card">
+          <iframe
+            title={`Map showing ${hotel.name}`}
+            src={hotel.mapsEmbedUrl}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
+          <div className="map-card-footer">
+            <span>Find the guesthouse inside Jaisalmer Fort near the Jain Temple.</span>
+            <a className="btn primary" href={hotel.mapsUrl} target="_blank" rel="noreferrer">Open Location in Google Maps</a>
           </div>
         </Reveal>
       </div>
@@ -702,32 +898,87 @@ function Schemas() {
 }
 
 function App() {
+  const [rooms, setRooms] = useState([]);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [roomsLoading, setRoomsLoading] = useState(true);
+  const [roomsError, setRoomsError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicSiteImages()
+      .then((items) => {
+        if (cancelled) return;
+        items.forEach((item) => {
+          const url = siteImageUrl(item.storage_path);
+          if (url && item.slot_key) images[item.slot_key] = url;
+        });
+        const ogImage = images.hero;
+        const ogTag = document.querySelector('meta[property="og:image"]');
+        if (ogTag && ogImage) ogTag.setAttribute("content", ogImage);
+        setRooms((current) => [...current]);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicGalleryImages().then((items) => { if (!cancelled) setGalleryImages(items); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicSections().then((items) => {
+      if (cancelled) return;
+      items.forEach((item) => { sectionContent[item.section_key] = { ...sectionContent[item.section_key], ...item }; });
+      setRooms((current) => [...current]);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicRooms()
+      .then((data) => {
+        if (!cancelled) setRooms(data);
+      })
+      .catch((err) => {
+        if (!cancelled) setRoomsError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setRoomsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <>
       <Schemas />
       <Navbar />
       <main>
         <Hero />
-        <BookingBar />
+        <BookingBar rooms={rooms} />
         <Showcase />
         <About />
-        <Rooms />
+        <Rooms rooms={rooms} loading={roomsLoading} error={roomsError} />
         <Restaurant />
         <Facilities />
         <Experiences />
         <Safari />
         <Story />
-        <Gallery />
+        <Gallery uploadedImages={galleryImages} />
         <Nearby />
-        <BookingForm />
+        <BookingForm rooms={rooms} />
         <ReviewsTrust />
         <Contact />
         <FAQ />
       </main>
-      <a className="floating-whatsapp" data-cta="whatsapp-booking" href={whatsappUrl()} target="_blank" rel="noreferrer" aria-label="Book on WhatsApp">WhatsApp</a>
       <Footer />
     </>
   );
 }
 
-createRoot(document.getElementById("root")).render(<App />);
+export default App;
