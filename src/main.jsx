@@ -46,6 +46,7 @@ class ErrorBoundary extends React.Component {
 function AdminApp() {
   return (
     <AdminAuthProvider>
+      <AdminNoIndex />
       <Routes>
         <Route path="login" element={<AdminLoginPage />} />
         <Route
@@ -67,13 +68,43 @@ function AdminApp() {
   );
 }
 
+function AdminNoIndex() {
+  React.useEffect(() => {
+    let robots = document.querySelector('meta[name="robots"]');
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    const previous = robots.content;
+    robots.content = "noindex,nofollow,noarchive";
+    return () => { robots.content = previous || "index,follow"; };
+  }, []);
+  return null;
+}
+
+function NotFound() {
+  return (
+    <main style={{ minHeight: "70vh", display: "grid", placeItems: "center", padding: "5rem 1.5rem", textAlign: "center" }}>
+      <div><p className="eyebrow">404</p><h1>Page not found</h1><p>The page you requested does not exist.</p><a className="btn primary" href="/">Return to the hotel website</a></div>
+    </main>
+  );
+}
+
+function PublicRoute() {
+  const path = window.location.pathname.replace(/\/$/, "") || "/";
+  const known = ["", "/", "/about", "/rooms", "/rooftop-restaurant", "/experiences", "/gallery", "/explore-jaisalmer", "/contact", "/faq", "/privacy-policy", "/terms-and-conditions", "/cancellation-policy"];
+  if (known.includes(path) || path.startsWith("/rooms/")) return <App />;
+  return <NotFound />;
+}
+
 function Root() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <Routes>
           <Route path="/admin/*" element={<AdminApp />} />
-          <Route path="/*" element={<App />} />
+          <Route path="/*" element={<PublicRoute />} />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>
