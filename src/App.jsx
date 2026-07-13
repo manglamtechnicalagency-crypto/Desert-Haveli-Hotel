@@ -555,8 +555,8 @@ function Gallery({ uploadedImages = [] }) {
     ["Interior", images.street, "Jaisalmer fort street life"],
     ["Rooms", images.demoPrincess, "Jaisalmer-themed demo premium heritage room"]
   ];
-  const tabs = ["All", ...new Set(["Rooms", "Restaurant", "Fort View", "Interior", "Exterior", "Jaisalmer", ...uploaded.map(([type]) => type)])];
   const uploaded = uploadedImages.map((item) => [item.category || "Rooms", galleryImageUrl(item.storage_path), item.alt_text || item.title || "Gallery image"]);
+  const tabs = ["All", ...new Set(["Rooms", "Restaurant", "Fort View", "Interior", "Exterior", "Jaisalmer", ...uploaded.map(([type]) => type)])];
   const allGallery = [...gallery, ...uploaded];
   const filtered = filter === "All" ? allGallery : allGallery.filter(([type]) => type === filter);
 

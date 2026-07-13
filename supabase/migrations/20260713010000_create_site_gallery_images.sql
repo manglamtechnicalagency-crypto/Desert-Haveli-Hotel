@@ -12,6 +12,9 @@ create table if not exists public.site_gallery_images (
   updated_at timestamptz not null default now()
 );
 alter table public.site_gallery_images enable row level security;
+drop policy if exists site_gallery_images_public_read on public.site_gallery_images;
+drop policy if exists site_gallery_images_admin_read on public.site_gallery_images;
+drop policy if exists site_gallery_images_admin_write on public.site_gallery_images;
 create policy site_gallery_images_public_read on public.site_gallery_images for select using (is_active = true);
 create policy site_gallery_images_admin_read on public.site_gallery_images for select to authenticated using (is_admin());
 create policy site_gallery_images_admin_write on public.site_gallery_images for all to authenticated using (current_admin_role() = any (array['super_admin','admin','editor'])) with check (current_admin_role() = any (array['super_admin','admin','editor']));
