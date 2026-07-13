@@ -98,6 +98,7 @@ function Navbar() {
 }
 
 function Hero() {
+
   return (
     <section className="hero" id="home">
       <img
@@ -198,6 +199,7 @@ function Showcase() {
     ["Traditional Interior", images.haveliInteriorReal],
     ["Hotel Exterior", images.hotelExteriorReal]
   ];
+
   return (
     <section className="section showcase">
       <Reveal>
@@ -298,6 +300,7 @@ function Facilities() {
       </Reveal>
       <div className="facility-columns">
         <Reveal className="facility-panel">
+
           <h3>Basic / General Facilities</h3>
           {basicFacilities.map((item) => <span key={item}>{item}<small>Available</small></span>)}
         </Reveal>
@@ -398,6 +401,7 @@ function RoomGallery({ images: roomImages, roomName }) {
       tabIndex={0}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+
       onFocus={() => setIsPaused(true)}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) setIsPaused(false);
@@ -465,7 +469,52 @@ function RoomCard({ room }) {
       <RoomGallery images={room.room_images} roomName={room.name} />
       <div>
         <h3>{room.name}</h3>
-        <strong>{priceLa…454 tokens truncated… className="rooms-grid">{rooms.map((room) => <Reveal key={room.id}><RoomCard room={room} /></Reveal>)}</div>
+        <strong>{priceLabel}</strong>
+        <p>{room.short_description}</p>
+        <ul>
+          {(room.room_features || []).slice(0, 4).map((feature) => (
+            <li key={feature.id}>{feature.name}</li>
+          ))}
+        </ul>
+        {!canBook && (
+          <p className="room-status-note" data-status={room.availability_status}>
+            {room.availability_status === "available" ? "Not currently bookable" : (room.availability_status || "unavailable").replace(/_/g, " ")}
+          </p>
+        )}
+        <div className="card-actions">
+          <a className="btn small ghost-light" href="#gallery">View Gallery</a>
+          <a
+            className="btn small primary"
+            data-cta="room-booking"
+            href={whatsappUrl(message)}
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!canBook}
+          >
+            {canBook ? "Book Now" : "Enquire"}
+          </a>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function Rooms({ rooms, loading, error }) {
+  return (
+    <section className="section rooms" id="rooms">
+
+      <Reveal>
+        <SectionTitle title={sectionText("heritage-rooms", "title", "Heritage Rooms Inside Jaisalmer Fort")}>
+          {sectionText("heritage-rooms", "short_description", "Choose a traditional or modern heritage room and enquire directly with the hotel for availability and final confirmation.")}
+        </SectionTitle>
+      </Reveal>
+
+      {loading && <p className="asset-note">Loading rooms…</p>}
+      {error && <p className="asset-note">Rooms could not be loaded right now. Please contact the hotel directly.</p>}
+      {!loading && !error && rooms.length === 0 && <p className="asset-note">Room listings are being updated. Please check back shortly.</p>}
+
+      {!loading && !error && rooms.length > 0 && (
+        <div className="rooms-grid">{rooms.map((room) => <Reveal key={room.id}><RoomCard room={room} /></Reveal>)}</div>
       )}
     </section>
   );
@@ -554,6 +603,7 @@ function Story() {
     [sectionText("jaisalmer-street-life", "title", "Jaisalmer Street Life"), images.street]
   ];
   return (
+
     <section className="story-strip">
       {blocks.map(([title, src]) => (
         <article key={title}>
@@ -654,6 +704,7 @@ function BookingForm({ rooms }) {
           Send your travel dates directly to the hotel and receive availability confirmation on WhatsApp or email.
         </SectionTitle>
       </Reveal>
+
       <Reveal className="booking-form">
         {[
           ["name", "Full Name", "text", true],
@@ -754,6 +805,7 @@ function ReviewsTrust() {
 }
 
 function Contact() {
+
   return (
     <section className="section contact" id="contact">
       <Reveal>
@@ -854,6 +906,7 @@ function Schemas() {
 }
 
 function App() {
+
   const [rooms, setRooms] = useState([]);
   const [galleryImages, setGalleryImages] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(true);
@@ -938,4 +991,3 @@ function App() {
 }
 
 export default App;
-
