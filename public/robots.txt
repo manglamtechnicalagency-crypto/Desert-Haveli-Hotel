@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /admin
+Disallow: /forgot-password
+Disallow: /verify-otp
+Disallow: /reset-password
+
+Sitemap: https://desert-haveli-hotel-beta.vercel.app/sitemap.xml
+
