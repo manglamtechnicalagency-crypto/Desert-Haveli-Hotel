@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { SITE_IMAGES_BUCKET } from "./siteImages";
+import { cloudflareMediaUrl, uploadToR2 } from "./cloudflareStorage";
 
 export const MAX_VIDEO_BYTES = 200 * 1024 * 1024;
 export const MAX_VIDEO_SECONDS = 15;
@@ -26,10 +27,9 @@ export async function uploadSiteVideo(file, sectionKey, metadata = {}) {
   const details = await readVideoMetadata(file);
   if (!Number.isFinite(details.duration) || details.duration > MAX_VIDEO_SECONDS + 0.05) throw new Error("Video duration exceeds the 15-second limit. Please upload a shorter video.");
   const path = `website-videos/${sectionKey}/${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`;
-  const { error: uploadError } = await supabase.storage.from(SITE_IMAGES_BUCKET).upload(path, file, { contentType: file.type, upsert: false });
-  if (uploadError) throw uploadError;
+  await uploadToR2(file, path);
   const { data, error } = await supabase.from("site_videos").insert({ section_key: sectionKey, storage_path: path, original_filename: file.name, mime_type: file.type, file_size: file.size, duration_seconds: details.duration, width: details.width, height: details.height, title: metadata.title || file.name, caption: metadata.caption || "", status: "ready", is_active: true }).select().single();
-  if (error) { await supabase.storage.from(SITE_IMAGES_BUCKET).remove([path]); throw error; }
+  if (error) throw error;
   return data;
 }
 
@@ -41,6 +41,7 @@ export async function fetchAdminVideos() {
 
 export function siteVideoUrl(storagePath) {
   if (!storagePath) return null;
+  if (import.meta.env.VITE_R2_PUBLIC_BASE_URL) return cloudflareMediaUrl(storagePath);
   const { data } = supabase.storage.from(SITE_IMAGES_BUCKET).getPublicUrl(storagePath);
   return data?.publicUrl || null;
 }
