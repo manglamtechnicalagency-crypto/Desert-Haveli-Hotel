@@ -1,7 +1,3 @@
-Exit code: 0
-Wall time: 0.2 seconds
-Total output lines: 985
-Output:
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
