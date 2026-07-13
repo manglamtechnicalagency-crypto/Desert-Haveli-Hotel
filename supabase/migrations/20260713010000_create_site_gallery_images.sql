@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.4 seconds
-Output:
 create table if not exists public.site_gallery_images (
   id uuid primary key default gen_random_uuid(),
   section_key text not null default 'room-gallery',
