@@ -1,9 +1,11 @@
 import { supabase } from "./supabaseClient";
+import { cloudflareMediaUrl, deleteFromR2, uploadToR2 } from "./cloudflareStorage";
 
 const ROOM_IMAGES_BUCKET = "room-images";
 
 export function publicImageUrl(storagePath) {
   if (!storagePath) return null;
+  if (import.meta.env.VITE_R2_PUBLIC_BASE_URL) return cloudflareMediaUrl(storagePath);
   const { data } = supabase.storage.from(ROOM_IMAGES_BUCKET).getPublicUrl(storagePath);
   return data?.publicUrl || null;
 }
@@ -338,11 +340,7 @@ export async function uploadRoomImage(roomId, file, { isPrimary = false, display
   const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "")}`;
   const storagePath = `rooms/${roomId}/${uniqueName}`;
 
-  const { error: uploadError } = await supabase.storage.from(ROOM_IMAGES_BUCKET).upload(storagePath, file, {
-    contentType: file.type,
-    upsert: false,
-  });
-  if (uploadError) throw uploadError;
+  await uploadToR2(file, storagePath);
 
   if (isPrimary) {
     // Clear any existing primary flag first so the unique partial index never conflicts.
@@ -367,14 +365,15 @@ export async function uploadRoomImage(roomId, file, { isPrimary = false, display
 
   if (error) {
     // Roll back the orphaned storage object if the DB insert failed.
-    await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([storagePath]);
+    await deleteFromR2(storagePath).catch(() => {});
     throw error;
   }
   return data;
 }
 
 export async function deleteRoomImage(image) {
-  await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([image.storage_path]);
+  if (import.meta.env.VITE_R2_PUBLIC_BASE_URL) await deleteFromR2(image.storage_path);
+  else await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([image.storage_path]);
   const { error } = await supabase.from("room_images").delete().eq("id", image.id);
   if (error) throw error;
 }
