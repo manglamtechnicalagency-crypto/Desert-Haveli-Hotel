@@ -8,7 +8,13 @@ export async function uploadToR2(file, key) {
     headers: { "content-type": "application/json", authorization: `Bearer ${session.access_token}` },
     body: JSON.stringify({ key, contentType: file.type, size: file.size })
   });
-  const result = await response.json();
+  const responseText = await response.text();
+  let result = {};
+  try {
+    result = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    throw new Error(`Upload service returned an invalid response (${response.status}).`);
+  }
   if (!response.ok || !result.url) throw new Error(result.message || "Could not prepare Cloudflare upload.");
   const upload = await fetch(result.url, { method: "PUT", headers: { "content-type": file.type }, body: file });
   if (!upload.ok) throw new Error("Cloudflare R2 upload failed.");

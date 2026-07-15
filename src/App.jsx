@@ -68,6 +68,7 @@ function Reveal({ children, className = "" }) {
 function Navbar() {
   const [open, setOpen] = useState(false);
   const [solid, setSolid] = useState(false);
+  const [activeId, setActiveId] = useState("home");
 
   React.useEffect(() => {
     const onScroll = () => setSolid(window.scrollY > 48);
@@ -76,18 +77,38 @@ function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  React.useEffect(() => {
+    const sections = navItems
+      .map(([, id]) => document.getElementById(id))
+      .filter(Boolean);
+    if (!sections.length) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible) setActiveId(visible.target.id);
+      },
+      { rootMargin: "-22% 0px -62% 0px", threshold: [0.1, 0.35, 0.7] }
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <header className={`navbar ${solid || open ? "solid" : ""}`}>
       <a className="brand" href="#home" aria-label="Desert Haveli home">
         <span className="brand-mark">DH</span>
         <span><strong>The Desert Haveli</strong><small>Guest House Jaisalmer</small></span>
       </a>
-      <button className="menu-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="main-menu">
+      <button className={`menu-toggle ${open ? "is-open" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="main-menu" aria-label={open ? "Close navigation" : "Open navigation"}>
         <span></span><span></span><span></span>
       </button>
+      {open && <button className="nav-scrim" type="button" aria-label="Close navigation" onClick={() => setOpen(false)} />}
       <nav id="main-menu" className={open ? "open" : ""}>
         {navItems.map(([label, id]) => (
-          <a key={id} href={`#${id}`} onClick={() => setOpen(false)}>{label}</a>
+          <a key={id} className={activeId === id ? "active" : ""} href={`#${id}`} aria-current={activeId === id ? "page" : undefined} onClick={() => { setActiveId(id); setOpen(false); }}>{label}</a>
         ))}
         <a className="nav-cta" data-cta="contact-whatsapp" href={whatsappUrl()} target="_blank" rel="noreferrer">
           WhatsApp
@@ -114,16 +135,6 @@ function Hero() {
         <motion.p initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12, duration: 0.8 }}>
           {sectionText("hero", "short_description", "Experience 450 years of heritage, royal haveli rooms, rooftop dining, desert views, and authentic Jaisalmer hospitality.")}
         </motion.p>
-        <div className="hero-actions">
-          <a className="btn primary" data-cta="whatsapp-booking" href={whatsappUrl()} target="_blank" rel="noreferrer">Book on WhatsApp</a>
-          <a className="btn ghost" data-cta="email-enquiry" href={emailUrl()}>Send Email Enquiry</a>
-          <a className="btn text" data-cta="room-booking" href="#rooms">View Rooms</a>
-        </div>
-        <div className="trust-row">
-          {["450-Year Heritage Stay", "Inside Golden Fort", "Rooftop Restaurant", "Desert & City Views", "Direct WhatsApp Booking"].map((item) => (
-            <span key={item}>{item}</span>
-          ))}
-        </div>
       </div>
     </section>
   );
@@ -132,15 +143,19 @@ function Hero() {
 function BookingBar({ rooms }) {
   const [form, setForm] = useState({ checkin: "", checkout: "", guests: "", room: rooms[0]?.name || "" });
   const [compact, setCompact] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [showBookingBar, setShowBookingBar] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });
   const message = `Hello Desert Haveli Guest House,\nI want to enquire about room booking.\n\nCheck-in: ${form.checkin}\nCheck-out: ${form.checkout}\nGuests: ${form.guests}\nPreferred Room: ${form.room}\n\nPlease confirm availability and price.`;
 
   React.useEffect(() => {
     const onScroll = () => {
-      const shouldCompact = window.innerWidth <= 760 && window.scrollY > window.innerHeight * 0.45;
+      const isMobile = window.innerWidth <= 760;
+      const shouldCompact = isMobile && window.scrollY > window.innerHeight * 0.45;
+      const shouldShow = isMobile ? shouldCompact : window.scrollY > 80;
       setCompact(shouldCompact);
-      if (!shouldCompact) setExpanded(false);
+      setShowBookingBar(shouldShow);
+      if (!shouldShow) setModalOpen(false);
     };
     onScroll();
     window.addEventListener("scroll", onScroll);
@@ -157,27 +172,59 @@ function BookingBar({ rooms }) {
   }, [rooms]);
 
   React.useEffect(() => {
-    document.body.classList.toggle("booking-expanded", compact && expanded);
-    return () => document.body.classList.remove("booking-expanded");
-  }, [compact, expanded]);
+    document.body.classList.toggle("booking-modal-open", compact && modalOpen);
+    return () => document.body.classList.remove("booking-modal-open");
+  }, [compact, modalOpen]);
+
+  React.useEffect(() => {
+    if (!modalOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setModalOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [modalOpen]);
+
+  if (!showBookingBar) return null;
 
   return (
-    <section className={`booking-bar ${compact && !expanded ? "capsule" : ""}`} aria-label="Quick booking enquiry">
-      {compact && !expanded ? (
-        <button className="booking-capsule" type="button" aria-expanded={expanded} onClick={() => setExpanded(true)}>
+    <>
+      <section className={`booking-bar ${compact ? "capsule" : ""}`} aria-label="Quick booking enquiry">
+      {compact ? (
+        <button className="booking-capsule" type="button" aria-expanded={modalOpen} aria-controls="booking-modal" onClick={() => setModalOpen(true)}>
           <span>Check dates</span>
           <strong>Book Direct</strong>
+          <small className="booking-offer"><b>OFFER</b> Get an extra discount when you book here</small>
         </button>
-      ) : null}
+      ) : (
+        <>
       <label>Check-in<input name="checkin" type="date" value={form.checkin} onChange={update} /></label>
       <label>Check-out<input name="checkout" type="date" value={form.checkout} onChange={update} /></label>
       <label>Guests<input name="guests" min="1" type="number" placeholder="2" value={form.guests} onChange={update} /></label>
       <label>Preferred room<select name="room" value={form.room} onChange={update}>{rooms.map((room) => <option key={room.name}>{room.name}</option>)}</select></label>
-      <a className="btn primary" data-cta="whatsapp-booking" href={whatsappUrl(message)} target="_blank" rel="noreferrer">Book on WhatsApp</a>
-      {compact && expanded ? (
-        <button className="booking-minimize" type="button" onClick={() => setExpanded(false)} aria-label="Minimize booking form">Minimize</button>
+      <a className="btn primary booking-whatsapp-btn" data-cta="whatsapp-booking" href={whatsappUrl(message)} target="_blank" rel="noreferrer"><span>Book on WhatsApp</span><small>Extra discount when you book direct</small></a>
+        </>
+      )}
+      </section>
+      {compact && modalOpen ? (
+        <div className="booking-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }}>
+          <section className="booking-modal" id="booking-modal" role="dialog" aria-modal="true" aria-labelledby="booking-modal-title">
+            <div className="booking-modal-header">
+              <h2 id="booking-modal-title">Check your dates</h2>
+              <button className="booking-modal-close" type="button" onClick={() => setModalOpen(false)} aria-label="Close booking form">×</button>
+            </div>
+            <div className="booking-modal-fields">
+              <label>Check-in<input name="checkin" type="date" value={form.checkin} onChange={update} /></label>
+              <label>Check-out<input name="checkout" type="date" value={form.checkout} onChange={update} /></label>
+              <label>Guests<input name="guests" min="1" type="number" placeholder="2" value={form.guests} onChange={update} /></label>
+              <label>Preferred room<select name="room" value={form.room} onChange={update}>{rooms.map((room) => <option key={room.name}>{room.name}</option>)}</select></label>
+            </div>
+            <p className="booking-discount-note">Book directly with the hotel to ask about your best available rate.</p>
+            <a className="btn primary booking-whatsapp-btn" data-cta="whatsapp-booking" href={whatsappUrl(message)} target="_blank" rel="noreferrer" onClick={() => setModalOpen(false)}><span>Book on WhatsApp</span><small>Extra discount when you book direct</small></a>
+          </section>
+        </div>
       ) : null}
-    </section>
+    </>
   );
 }
 
@@ -241,14 +288,20 @@ function About() {
         <p>
           The building stands on the rampart of Jaisalmer Fort and preserves original walls, traditional design, and old-world atmosphere. Inspired by Atithi Devo Bhava, the team aims to make every stay personal, comfortable, and memorable.
         </p>
-        <a className="btn secondary" href="#booking" data-cta="room-booking">Discover Our Story</a>
       </Reveal>
       <Reveal className="usp-panel">
         {usps.map((item, index) => (
-          <div className="usp" key={item}>
+          <motion.div
+            className="usp"
+            key={item}
+            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5, delay: index * 0.08, ease: "easeOut" }}
+          >
             <Icon>{String(index + 1).padStart(2, "0")}</Icon>
             <span>{item}</span>
-          </div>
+          </motion.div>
         ))}
       </Reveal>
     </section>
@@ -280,7 +333,7 @@ function Restaurant() {
       </div>
       <div className="service-grid compact">
         {restaurantHighlights.map(([title, text]) => (
-          <Reveal className="service-card" key={title}><h3>{title}</h3><p>{text}</p></Reveal>
+          <Reveal className="service-card menu-card" key={title}><h3>{title}</h3><p>{text}</p></Reveal>
         ))}
       </div>
     </section>
@@ -299,11 +352,11 @@ function Facilities() {
       <div className="facility-columns">
         <Reveal className="facility-panel">
           <h3>Basic / General Facilities</h3>
-          {basicFacilities.map((item) => <span key={item}>{item}<small>Available</small></span>)}
+          {basicFacilities.map((item) => <span className="facility-item" key={item}>{item}<small>Available</small></span>)}
         </Reveal>
         <Reveal className="facility-panel request">
           <h3>On-Request / Chargeable Facilities</h3>
-          {requestFacilities.map((item, index) => <span key={item}>{item}<small>{index % 3 === 0 ? "Chargeable" : index % 3 === 1 ? "On Request" : "Ask Hotel"}</small></span>)}
+          {requestFacilities.map((item, index) => <span className="facility-item" key={item}>{item}<small>{index % 3 === 0 ? "Chargeable" : index % 3 === 1 ? "On Request" : "Ask Hotel"}</small></span>)}
         </Reveal>
       </div>
       <p className="asset-note">Some services are chargeable and may vary based on availability, season, distance, and guest requirements. Please confirm details directly with the hotel before booking.</p>
@@ -421,6 +474,8 @@ function RoomGallery({ images: roomImages, roomName }) {
       }}
     >
       <img
+        key={roomImages[index].storage_path}
+        className="room-gallery-image"
         loading="lazy"
         src={publicImageUrl(roomImages[index].storage_path)}
         alt={roomImages[index].alt_text || `${roomName} photo ${index + 1} of ${roomImages.length}`}
@@ -467,7 +522,7 @@ function RoomCard({ room }) {
         <h3>{room.name}</h3>
         <strong>{priceLabel}</strong>
         <p>{room.short_description}</p>
-        <ul>
+        <ul className="room-features" aria-label={`${room.name} features`}>
           {(room.room_features || []).slice(0, 4).map((feature) => (
             <li key={feature.id}>{feature.name}</li>
           ))}
@@ -578,7 +633,6 @@ function Gallery({ uploadedImages = [] }) {
           </button>
         ))}
       </div>
-      <p className="asset-note">Real hotel images/videos can be replaced in the assets folder.</p>
       {active && (
         <div className="lightbox" role="dialog" aria-modal="true" onClick={() => setActive(null)}>
           <button aria-label="Close gallery preview">Close</button>
@@ -610,6 +664,8 @@ function Story() {
 }
 
 function Nearby() {
+  const [activeIndex, setActiveIndex] = useState(null);
+  const [zoom, setZoom] = useState(1);
   const attractionImageKeys = {
     "Jaisalmer Fort / Sonar Quila": "jaisalmerFortView",
     "Jain Temples": "jainTemples",
@@ -621,6 +677,23 @@ function Nearby() {
     "Kuldhara and Khaba": "kuldhara",
     "Wood Fossil Park": "woodFossilPark"
   };
+
+  useEffect(() => {
+    if (activeIndex === null) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setActiveIndex(null);
+      if (event.key === "ArrowRight") setActiveIndex((current) => (current + 1) % attractions.length);
+      if (event.key === "ArrowLeft") setActiveIndex((current) => (current - 1 + attractions.length) % attractions.length);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [activeIndex]);
+
+  const openAttraction = (index) => {
+    setActiveIndex(index);
+    setZoom(1);
+  };
+
   return (
     <section className="section nearby" id="explore">
       <Reveal>
@@ -629,16 +702,43 @@ function Nearby() {
         </SectionTitle>
       </Reveal>
       <div className="nearby-grid">
-        {attractions.map(([name, text, src]) => (
+        {attractions.map(([name, text, src, distance, travelTime], index) => (
           <Reveal className="attraction" key={name}>
-            <img loading="lazy" src={images[attractionImageKeys[name]] || src} alt={`${name} near Desert Haveli Guest House Jaisalmer`} />
+            <button className="attraction-image-trigger" type="button" onClick={() => openAttraction(index)} aria-label={`Open larger image of ${name}`}>
+              <img loading="lazy" src={images[attractionImageKeys[name]] || src} alt={`${name} near Desert Haveli Guest House Jaisalmer`} />
+              <span className="image-zoom-hint" aria-hidden="true">⌕</span>
+            </button>
             <h3>{name}</h3>
             <p>{text}</p>
-            <small>Distance/time: please confirm locally</small>
+            <div className="attraction-meta" aria-label={`Approximate distance and travel time from the hotel: ${distance}, ${travelTime}`}>
+              <span>⌖ {distance}</span>
+              <span>◷ {travelTime}</span>
+            </div>
+            <small className="attraction-meta-note">Approx. from the hotel</small>
             <a data-cta="contact-whatsapp" href={whatsappUrl(`Hello Desert Haveli Guest House,\nPlease guide me for visiting ${name}.`)} target="_blank" rel="noreferrer">Ask for Local Guidance</a>
           </Reveal>
         ))}
       </div>
+      {activeIndex !== null && (
+        <div className="explore-lightbox" role="dialog" aria-modal="true" aria-label={`${attractions[activeIndex][0]} image viewer`} onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveIndex(null); }}>
+          <button className="explore-lightbox-close" type="button" onClick={() => setActiveIndex(null)} aria-label="Close image viewer">×</button>
+          <button className="explore-lightbox-nav prev" type="button" onClick={() => setActiveIndex((activeIndex - 1 + attractions.length) % attractions.length)} aria-label="Previous image">‹</button>
+          <div className="explore-lightbox-stage" onWheel={(event) => { event.preventDefault(); setZoom((current) => Math.min(3, Math.max(1, current + (event.deltaY < 0 ? 0.2 : -0.2)))); }}>
+            <img
+              src={images[attractionImageKeys[attractions[activeIndex][0]]] || attractions[activeIndex][2]}
+              alt={`${attractions[activeIndex][0]} near Desert Haveli Guest House Jaisalmer`}
+              style={{ transform: `scale(${zoom})` }}
+            />
+          </div>
+          <button className="explore-lightbox-nav next" type="button" onClick={() => setActiveIndex((activeIndex + 1) % attractions.length)} aria-label="Next image">›</button>
+          <div className="explore-lightbox-controls" aria-label="Zoom controls">
+            <button type="button" onClick={() => setZoom((current) => Math.max(1, current - 0.25))} aria-label="Zoom out">−</button>
+            <span>{Math.round(zoom * 100)}%</span>
+            <button type="button" onClick={() => setZoom((current) => Math.min(3, current + 0.25))} aria-label="Zoom in">+</button>
+            <button type="button" onClick={() => setZoom(1)}>Reset</button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -657,6 +757,10 @@ function BookingForm({ rooms }) {
     ["name", "phone"].forEach((key) => {
       if (!form[key] || !form[key].trim()) next[key] = "Required";
     });
+
+    if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
+      next.email = "Enter a valid email address";
+    }
 
     // Guest count: must be a positive integer, no 0, negatives, decimals, or non-numeric input.
     const guestsRaw = form.guests;
@@ -741,7 +845,7 @@ function BookingForm({ rooms }) {
         <label className="full">Message<textarea name="message" rows="5" value={form.message} onChange={update} placeholder="Share arrival time, room preference, or any special request." /></label>
         {submitted && <p className="full admin-form-success" role="status">Enquiry opened — please complete sending it in WhatsApp/email.</p>}
         <div className="form-actions full">
-          <button className="btn primary" data-cta="whatsapp-booking" type="button" disabled={submitting} onClick={() => open("whatsapp")}>Send Enquiry on WhatsApp</button>
+          <button className="btn primary" data-cta="whatsapp-booking" type="button" disabled={submitting} onClick={() => open("whatsapp")}>Send Query on WhatsApp</button>
           <button className="btn secondary" data-cta="email-enquiry" type="button" disabled={submitting} onClick={() => open("email")}>Send Email Enquiry</button>
         </div>
       </Reveal>
@@ -774,6 +878,29 @@ function Timeline() {
 }
 
 function ReviewsTrust() {
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewStatus, setReviewStatus] = useState("");
+  const googleReviewsUrl = "https://www.google.com/travel/search?q=jaisalmer%20desert%20haveli%20on%20fort&g2lb=4965990%2C72471280%2C72560029%2C72573224%2C72647020%2C72686036%2C72803964%2C72882230%2C73064764%2C121529349%2C121738283%2C121762713&hl=en-IN&gl=in&cs=1&ssta=1&ts=CAEaRwopEicyJTB4Mzk0N2JjMjhhZTk0MjU3OToweGE1NTU0YmE3YjQxNDg5MGYSGhIUCgcI6g8QBxgPEgcI6g8QBxgQGAEyAhAA&qs=CAEyFENnc0lqNUxTb1B2MDBxcWxBUkFCOAJCCQkPiRS0p0tVpUIJCQ-JFLSnS1Wl&ap=ugEHcmV2aWV3cw&ictx=111&ved=0CAAQ5JsGahcKEwio_cnhqtSVAxUAAAAAHQAAAAAQAw";
+  const submitReview = async () => {
+    if (!rating) {
+      setReviewStatus("Please choose a star rating first.");
+      return;
+    }
+    if (!reviewText.trim()) {
+      setReviewStatus("Please share a few words about your stay first.");
+      return;
+    }
+    const reviewWindow = window.open(googleReviewsUrl, "_blank", "noopener,noreferrer");
+    const preparedReview = `${"★".repeat(rating)}${"☆".repeat(5 - rating)} (${rating}/5)\n\n${reviewText.trim()}`;
+    try {
+      await navigator.clipboard.writeText(preparedReview);
+      setReviewStatus(`Your ${rating}-star rating and review were copied. Choose ${rating} stars in Google, paste the review, and submit it.`);
+    } catch {
+      setReviewStatus(`Google Reviews opened. Choose ${rating} stars, then copy and paste your review there.`);
+    }
+    if (!reviewWindow) setReviewStatus("Please allow pop-ups, then open Google Reviews again.");
+  };
   return (
     <section className="section trust">
       <Reveal>
@@ -789,10 +916,36 @@ function ReviewsTrust() {
             {name && <em>{name}</em>}
           </Reveal>
         ))}
+        <Reveal className="review-google-card">
+          <span className="review-google-stars" aria-hidden="true">★★★★★</span>
+          <strong>Share your Jaisalmer experience</strong>
+          <p>Your honest review helps future guests discover a trusted stay inside the Golden Fort.</p>
+          <a className="review-google-button" href={googleReviewsUrl} target="_blank" rel="noreferrer">
+            Write a Google Review <span aria-hidden="true">↗</span>
+          </a>
+        </Reveal>
       </div>
       <div className="trust-points">
         {["Direct hotel contact", "Clear check-in process", "ID proof required at check-in", "Secure guest enquiry", "No unnecessary third-party redirection", "WhatsApp/email confirmation"].map((point) => <span key={point}>{point}</span>)}
       </div>
+      <Reveal className="review-cta">
+        <div>
+          <span className="review-eyebrow">Your experience matters</span>
+          <h3>Enjoyed your stay?</h3>
+          <p>Tell us what you enjoyed—from the heritage rooms and rooftop food to the hospitality and Jaisalmer experience.</p>
+        </div>
+        <div className="review-actions">
+          <div className="rating-picker" role="group" aria-label="Choose your rating">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <button key={value} type="button" className={value <= rating ? "selected" : ""} onClick={() => setRating(value)} aria-label={`${value} star${value === 1 ? "" : "s"}`} aria-pressed={value <= rating}>★</button>
+            ))}
+          </div>
+          <label className="review-input-label" htmlFor="guest-review">Your review</label>
+          <textarea id="guest-review" value={reviewText} onChange={(event) => { setReviewText(event.target.value); setReviewStatus(""); }} rows="4" maxLength="1000" placeholder="Share your favourite part of the stay…" />
+          <button className="btn primary" type="button" onClick={submitReview}>{rating === 5 ? "Continue to Google Reviews" : "Share on Google Reviews"}</button>
+          {reviewStatus && <small className="review-status" role="status">{reviewStatus}</small>}
+        </div>
+      </Reveal>
     </section>
   );
 }
@@ -858,21 +1011,32 @@ function FAQ() {
 }
 
 function Footer() {
+  const tripadvisorUrl = "https://www.tripadvisor.in/Hotel_Review-g297667-d1173534-Reviews-Desert_Haveli_Guest_House-Jaisalmer_Jaisalmer_District_Rajasthan.html";
   return (
-    <footer>
-      <div>
+    <footer className="site-footer">
+      <div className="footer-brand">
+        <span className="footer-kicker">Inside Jaisalmer Fort</span>
         <h2>The Desert Haveli Guest House Jaisalmer</h2>
         <p>Experience heritage hospitality inside the Golden Fort of Jaisalmer.</p>
+        <a className="tripadvisor-link" href={tripadvisorUrl} target="_blank" rel="noreferrer" aria-label="View Desert Haveli Guest House on Tripadvisor">
+          <span className="tripadvisor-mark" aria-hidden="true">TA</span>
+          <span><strong>Tripadvisor</strong><small>View our hotel page</small></span>
+        </a>
       </div>
-      <div className="footer-links">
+      <div className="footer-column footer-links">
+        <h3>Explore</h3>
         {navItems.map(([label, id]) => <a key={id} href={`#${id}`}>{label}</a>)}
       </div>
-      <div>
+      <div className="footer-column footer-contact">
+        <h3>Contact the hotel</h3>
         <a data-cta="contact-whatsapp" href={whatsappUrl()} target="_blank" rel="noreferrer">{hotel.phone}</a>
         <a data-cta="email-enquiry" href={`mailto:${hotel.email}`}>{hotel.email}</a>
         <p>{hotel.address}</p>
       </div>
-      <small>Copyright {new Date().getFullYear()} The Desert Haveli Guest House Jaisalmer. All rights reserved.</small>
+      <div className="footer-bottom">
+        <small>Copyright {new Date().getFullYear()} The Desert Haveli Guest House Jaisalmer. All rights reserved.</small>
+        <span>Direct bookings · Local hospitality · Golden Fort stay</span>
+      </div>
     </footer>
   );
 }
@@ -968,7 +1132,6 @@ function App() {
         <Facilities />
         <Experiences />
         <Safari />
-        <Story />
         <Gallery uploadedImages={galleryImages} />
         <Nearby />
         <BookingForm rooms={rooms} />

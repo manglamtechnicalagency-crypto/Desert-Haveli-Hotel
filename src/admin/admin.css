@@ -183,6 +183,31 @@
 .admin-action-panel strong { display: block; margin-top: 4px; color: var(--brown); }
 .admin-action-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
 
+.admin-inventory-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 18px;
+}
+.admin-inventory-stat {
+  position: relative;
+  overflow: hidden;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #fffaf0, #f7ead4);
+  box-shadow: 0 8px 20px rgba(42,22,15,.05);
+}
+.admin-inventory-stat::after { content: ""; position: absolute; right: -24px; bottom: -34px; width: 92px; height: 92px; border-radius: 50%; background: rgba(228,184,98,.16); }
+.admin-inventory-stat span, .admin-inventory-stat small { display: block; position: relative; z-index: 1; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.admin-inventory-stat strong { display: inline-block; position: relative; z-index: 1; margin: 6px 5px 0 0; color: var(--maroon); font-family: "Cormorant Garamond", serif; font-size: 34px; line-height: 1; }
+.admin-inventory-stat small { display: inline; font-size: 10px; letter-spacing: 0; text-transform: none; }
+.admin-inventory-stat.is-positive { border-color: rgba(76,157,85,.24); }
+.admin-inventory-stat.is-positive strong { color: #2e6b2e; }
+.admin-inventory-stat.is-accent { border-color: rgba(141,43,45,.2); }
+.admin-inventory-stat.is-warning { border-color: rgba(190,145,76,.42); }
+.admin-inventory-stat.is-warning strong { color: #a86d1c; }
+
 .admin-section {
   background: white;
   border: 1px solid var(--line);
@@ -220,12 +245,17 @@
   gap: 10px;
   margin-bottom: 18px;
 }
-.admin-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: rgba(241,223,191,.25); }
+.admin-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: white; box-shadow: 0 6px 18px rgba(42,22,15,.04); }
 .admin-list-toolbar .admin-filters { margin: 0; flex: 1; }
 .admin-result-summary { display: flex; align-items: baseline; gap: 7px; min-width: 125px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
 .admin-result-summary strong { color: var(--maroon); font-family: "Cormorant Garamond", serif; font-size: 28px; line-height: 1; }
 .admin-clear-filters { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--brown-2); background: white; cursor: pointer; font-weight: 700; font-size: 12px; white-space: nowrap; }
 .admin-clear-filters:hover { border-color: var(--gold); color: var(--maroon); }
+.admin-quick-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: -8px 0 18px; }
+.admin-quick-filters > span { margin-right: 4px; color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.admin-quick-filters button { padding: 8px 12px; border: 1px solid rgba(190,145,76,.34); border-radius: 999px; background: rgba(255,255,255,.72); color: var(--brown-2); cursor: pointer; font-size: 12px; font-weight: 800; transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease; }
+.admin-quick-filters button:hover { transform: translateY(-1px); border-color: var(--gold); }
+.admin-quick-filters button.active { border-color: var(--maroon); background: var(--maroon); color: white; }
 .admin-archive-intro { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; margin-bottom: 1.25rem; padding: 1.1rem 1.25rem; border: 1px solid rgba(141,43,45,.2); border-radius: var(--radius); background: linear-gradient(120deg, #fff7e9, #f7e7d1); }
 .admin-archive-intro-icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: white; background: var(--maroon); font-size: 1.7rem; }
 .admin-archive-intro h2 { margin: .2rem 0 .3rem; color: var(--brown); font-family: "Cormorant Garamond", serif; font-size: 1.55rem; }
@@ -854,7 +884,14 @@
 
 /* Mobile: sidebar becomes an off-canvas drawer, not a squeezed column */
 @media (max-width: 860px) {
+  .admin-inventory-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-menu-toggle { display: flex; }
+  .admin-content { padding: 22px 16px 40px; }
+  .admin-page-header { align-items: flex-start; margin-bottom: 18px; }
+  .admin-page-header > .btn { width: 100%; }
+  .admin-page-header > div { min-width: 0; }
+  .admin-page-header > div > p { max-width: 58ch; line-height: 1.5; }
+  .admin-live-indicator { align-self: flex-start; }
 
   /* Topbar was a single unbreakable row (toggle + brand + role badge + 2
      buttons) that overflowed the viewport on phones, clipping the role
@@ -882,23 +919,29 @@
 
   .admin-sidebar {
     position: fixed;
-    inset: 68px 0 0 auto;
+    inset: 104px 0 0 auto;
     right: auto;
     left: 0;
     width: min(260px, 80vw);
-    height: calc(100vh - 68px);
+    height: calc(100vh - 104px);
     transform: translateX(-100%);
     transition: transform 0.25s ease;
     z-index: 45;
     overflow-y: auto;
   }
 
-  .admin-sidebar.open { transform: translateX(0); }
+  .admin-sidebar.open {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 4px;
+    transform: translateX(0);
+  }
 
   .admin-sidebar-scrim {
     display: block;
     position: fixed;
-    inset: 68px 0 0 0;
+    inset: 104px 0 0 0;
     background: rgba(29, 19, 13, 0.4);
     z-index: 44;
   }
@@ -909,7 +952,14 @@
   .admin-action-buttons .btn { flex: 1 1 auto; }
   .admin-archive-intro { grid-template-columns: auto 1fr; }
   .admin-archive-intro .btn { grid-column: 1 / -1; justify-self: start; }
+  .admin-archive-intro { align-items: start; }
+  .admin-archive-intro p { line-height: 1.6; }
   .admin-archive-summary { align-items: flex-start; flex-direction: column; gap: .3rem; }
+  .admin-list-toolbar { align-items: stretch; flex-direction: column; gap: 12px; padding: 14px; }
+  .admin-list-toolbar .admin-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .admin-filters input, .admin-filters select { width: 100%; min-width: 0; }
+  .admin-result-summary { min-width: 0; }
+  .admin-clear-filters { align-self: flex-start; }
 
   /* Turn the rooms table into a stack of cards instead of a horizontally
      scrolling table. Every <td> already carries a data-label attribute
@@ -917,6 +967,7 @@
      of each value via ::before. */
   .admin-table-wrap {
     overflow-x: visible;
+    min-width: 0;
     border: none;
     background: transparent;
   }
@@ -924,6 +975,8 @@
   .admin-table, .admin-table thead, .admin-table tbody, .admin-table tr, .admin-table td {
     display: block;
     width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .admin-table thead {
@@ -965,10 +1018,26 @@
     text-align: left;
   }
 
+  .admin-table .admin-cell-value {
+    display: block;
+    max-width: 62%;
+    margin-left: auto;
+    color: var(--ink);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .admin-table .admin-cell-value .admin-status-pill { max-width: 100%; }
+
   .admin-table td[data-label="Image"] { justify-content: flex-start; }
   .admin-table td[data-label="Image"]::before { display: none; }
   .admin-table td[data-label="Actions"] { flex-direction: column; align-items: stretch; }
   .admin-table td[data-label="Actions"]::before { margin-bottom: 8px; }
+  .admin-table td[data-label="Actions"] > .btn {
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .admin-table .admin-row-actions { justify-content: flex-end; }
   .admin-table td[data-label="Actions"] .admin-row-actions { justify-content: stretch; }
   .admin-table td[data-label="Actions"] .admin-row-actions .btn { flex: 1 1 auto; }
@@ -979,6 +1048,28 @@
   .admin-inline-form label { min-width: 0; width: 100%; }
   .admin-inline-form { gap: 10px; }
 
+  .admin-tabs {
+    gap: 0;
+    margin-right: -16px;
+    padding-right: 16px;
+    scrollbar-width: thin;
+  }
+  .admin-tabs button { padding: 11px 14px; }
+  .admin-fieldset { padding: 16px 14px; }
+  .admin-fieldset-primary legend { font-size: 22px; }
+  .admin-form-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-left: -2px;
+    margin-right: -2px;
+    padding: 12px 2px 4px;
+    position: static;
+    background: none;
+  }
+  .admin-form-actions .btn { width: 100%; min-height: 44px; }
+  .admin-form-actions .btn:first-child { grid-column: 1 / -1; }
+
   .admin-auth-shell { grid-template-columns: 1fr; min-height: 0; max-width: 520px; }
   .admin-auth-intro { min-height: 250px; padding: 32px; }
   .admin-auth-intro h2 { font-size: clamp(38px, 10vw, 54px); }
@@ -986,10 +1077,26 @@
 }
 
 @media (max-width: 520px) {
-  .admin-auth-screen { padding: 0; place-items: stretch; }
-  .admin-auth-shell { min-height: 100vh; border: 0; border-radius: 0; }
+  .admin-inventory-overview { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .admin-inventory-stat { padding: 13px 12px; }
+  .admin-inventory-stat strong { font-size: 28px; }
+  .admin-inventory-stat small { display: block; margin-top: 3px; }
+  .admin-auth-screen {
+    min-height: 100svh;
+    align-items: start;
+    padding: 28px 14px 40px;
+    background:
+      radial-gradient(circle at 90% 0%, rgba(228, 184, 98, 0.24), transparent 18rem),
+      linear-gradient(135deg, #fffaf0 0%, #f1dfbf 100%);
+  }
+  .admin-auth-shell {
+    min-height: 0;
+    border: 1px solid rgba(74,42,27,.12);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(42,22,15,.14);
+  }
   .admin-auth-intro { display: none; }
-  .admin-auth-card { padding: 32px 22px; }
+  .admin-auth-card { padding: 34px 22px 30px; border-radius: 16px; }
   .admin-auth-brand { margin-bottom: 58px; }
   .admin-auth-card h1 { font-size: 48px; }
   .admin-pin-row { gap: 6px; }
@@ -999,6 +1106,28 @@
      shrink the role badge + buttons so the whole action row reliably fits
      without wrapping mid-word or crowding. */
   .admin-brand small { display: none; }
+  .admin-page-header h1 { font-size: 32px; }
+  .admin-content { padding: 18px 12px 32px; }
+  .admin-page-header { gap: 10px; }
+  .admin-page-header > div { width: 100%; }
+  .admin-live-indicator { font-size: 11px; padding: 7px 10px; }
+  .admin-tabs { margin-right: -12px; padding-right: 12px; }
+  .admin-action-buttons { display: grid; grid-template-columns: 1fr; width: 100%; }
+  .admin-action-buttons .btn { width: 100%; }
+  .admin-action-panel { padding: 16px; }
+  .admin-recent-list li { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .admin-recent-list li span { color: var(--muted); font-size: 12px; }
+  .admin-list-toolbar .admin-filters { grid-template-columns: 1fr; }
+  .admin-table tr { padding: 8px 12px; }
+  .admin-table td { padding: 11px 0; }
+  .admin-archive-intro { grid-template-columns: 1fr; gap: .75rem; padding: 1rem; }
+  .admin-archive-intro-icon { width: 40px; height: 40px; font-size: 1.4rem; }
+  .admin-archive-intro h2 { font-size: 1.35rem; }
+  .admin-archive-intro .btn { width: 100%; }
+  .admin-archive-summary { padding: .7rem .85rem; }
+  .admin-form-actions { grid-template-columns: 1fr; }
+  .admin-form-actions .btn:first-child { grid-column: auto; }
+  .admin-form-actions .btn { min-height: 46px; }
 
   .admin-topbar-actions {
     gap: 8px;

@@ -172,15 +172,16 @@ export const safariServices = [
 ];
 
 export const attractions = [
-  ["Jaisalmer Fort / Sonar Quila", "Popularly known as Sonar Quila, Jaisalmer Fort dominates the skyline of the golden city. Built in 1156 AD by Rawal Jaisal, the fort is one of Rajasthan's oldest living forts.", images.jaisalmerFortView || images.exterior],
-  ["Jain Temples", "Historic temple architecture within walking proximity of the guesthouse near the Jain Temple area.", images.jainTemples || images.interior],
-  ["Patwon Ki Haveli", "One of Jaisalmer's grandest mansions and an open-air masterpiece of stone carving, known for carved balconies and sandstone shadows.", images.patwonHaveli || images.fortView],
-  ["Gadisar Lake", "Built in 1156 AD and later rebuilt in 1367 AD, Gadisar Lake is a peaceful picnic spot known for calm water and winter migratory birds.", images.gadisarLake || images.sunset],
-  ["Sam Sand Dunes", "A classic desert excursion area for dune sunsets and safari enquiries available on request.", images.samSandDunes || images.street],
-  ["Local Fort Market", "Traditional lanes, textiles, handicrafts, cafes, and everyday life inside the fort.", images.localFortMarket || images.hero],
-  ["Bada Bagh / Bara Bagh", "Known for cenotaphs built in memory of Jaisalmer's rulers, surrounded by trees and desert landscapes.", images.badaBagh || images.rooftopRestaurant],
-  ["Kuldhara and Khaba", "Deserted village routes can be explored with local travel guidance. Charges may apply.", images.kuldhara || images.rajasthaniThali],
-  ["Wood Fossil Park", "Near Akal on the Barmer Road, the park offers a glimpse into the Jurassic period with fossilised trees.", images.woodFossilPark || images.fortView]
+  ["Jaisalmer Fort / Sonar Quila", "Popularly known as Sonar Quila, Jaisalmer Fort dominates the skyline of the golden city. Built in 1156 AD by Rawal Jaisal, the fort is one of Rajasthan's oldest living forts.", images.jaisalmerFortView || images.exterior, "0.2 km", "3–5 min walk"],
+  ["Baa Ri Haveli", "A beautiful heritage monument close to the guesthouse, offering another glimpse into the living architecture and sandstone character of Jaisalmer Fort.", images.exterior, "50 m", "1 min walk"],
+  ["Jain Temples", "Historic temple architecture within walking proximity of the guesthouse near the Jain Temple area.", images.jainTemples || images.interior, "0.1 km", "2–4 min walk"],
+  ["Patwon Ki Haveli", "One of Jaisalmer's grandest mansions and an open-air masterpiece of stone carving, known for carved balconies and sandstone shadows.", images.patwonHaveli || images.fortView, "0.7–1 km", "10–15 min walk"],
+  ["Gadisar Lake", "Built in 1156 AD and later rebuilt in 1367 AD, Gadisar Lake is a peaceful picnic spot known for calm water and winter migratory birds.", images.gadisarLake || images.sunset, "1.5–2 km", "8–12 min drive"],
+  ["Sam Sand Dunes", "A classic desert excursion area for dune sunsets and safari enquiries available on request.", images.samSandDunes || images.street, "40–45 km", "50–70 min drive"],
+  ["Local Fort Market", "Traditional lanes, textiles, handicrafts, cafes, and everyday life inside the fort.", images.localFortMarket || images.hero, "0.2–0.5 km", "4–8 min walk"],
+  ["Bada Bagh / Bara Bagh", "Known for cenotaphs built in memory of Jaisalmer's rulers, surrounded by trees and desert landscapes.", images.badaBagh || images.rooftopRestaurant, "6–10 km", "20–30 min drive"],
+  ["Kuldhara and Khaba", "Deserted village routes can be explored with local travel guidance. Charges may apply.", images.kuldhara || images.rajasthaniThali, "18–35 km", "35–60 min drive"],
+  ["Wood Fossil Park", "Near Akal on the Barmer Road, the park offers a glimpse into the Jurassic period with fossilised trees.", images.woodFossilPark || images.fortView, "17 km", "30–40 min drive"]
 ];
 
 export const faqs = [
@@ -200,6 +201,9 @@ export const faqs = [
 ];
 
 export const reviews = [
+  ["A Hidden Gem in Jaisalmer", "A memorable stay inside the fort, with warm care from Vimal, a beautifully preserved haveli, sunset views from the rooftop, and thoughtful help arranging local experiences.", "Beck K · Google · Dec 2024"],
+  ["The Most Incredible Experience", "The central fort location, spacious room, beautiful terrace, and genuinely caring team made this a standout Jaisalmer stay. The hosts were patient, kind, and always ready to help.", "Leonardo · Google · Jan 2025"],
+  ["Wonderful Family Stay", "A welcoming family stay with clean rooms, helpful staff, and strong value for money. Vimal Bhai and the team made the visit comfortable from arrival to departure.", "Haris R · Google · Dec 2025"],
   ["You Just Have to Stay Here", "This was heaven. We had the honeymoon room and stayed for three nights. The team took great care of us and nothing felt impossible. Even if you are not staying here, the rooftop food is worth experiencing.", ""],
   ["The Desert Haveli Is the Best", "We planned to stay only a couple of nights but liked it so much that we stayed longer. The haveli has a friendly atmosphere, rooms with character, a lovely rooftop terrace, and some of the best food we had in India. The Rajasthani Thali and Ker Sangri were wonderful.", "ChocolateCharlie"],
   ["The Great Experience of Thar", "It was a great experience to stay at Jaisalmer Desert Haveli. It is calm and peaceful, the service is great, and the staff is very supportive. The location is close to the city and famous sights.", "Raj Bothra, Mumbai"],

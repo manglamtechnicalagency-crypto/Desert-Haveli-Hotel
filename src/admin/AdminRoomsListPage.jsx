@@ -195,22 +195,22 @@ export default function AdminRoomsListPage({ archiveView = false }) {
                         )}
                       </td>
                       <td data-label="Room">
-                        <strong>#{room.room_number}</strong> {room.name}
+                        <span className="admin-cell-value"><strong>#{room.room_number}</strong> {room.name}</span>
                       </td>
-                      <td data-label="Type">{room.room_type || "—"}</td>
-                      <td data-label="Price">{formatCurrency(room.base_price, room.currency)}</td>
+                      <td data-label="Type"><span className="admin-cell-value">{room.room_type || "—"}</span></td>
+                      <td data-label="Price"><span className="admin-cell-value">{formatCurrency(room.base_price, room.currency)}</span></td>
                       <td data-label="Availability">
-                        <span className="admin-status-pill" data-status={room.availability_status}>
+                        <span className="admin-cell-value"><span className="admin-status-pill" data-status={room.availability_status}>
                           {(room.availability_status || "unknown").replace(/_/g, " ")}
-                        </span>
+                        </span></span>
                       </td>
                       <td data-label="Status">
-                        <span className="admin-status-pill" data-status={room.status}>
+                        <span className="admin-cell-value"><span className="admin-status-pill" data-status={room.status}>
                           {room.status}
                         </span>
-                      </td>
-                      <td data-label="Visibility">{room.is_visible ? "Visible" : "Hidden"}</td>
-                      <td data-label="Updated">{new Date(room.updated_at).toLocaleDateString()}</td>
+                        </span></td>
+                      <td data-label="Visibility"><span className="admin-cell-value">{room.is_visible ? "Visible" : "Hidden"}</span></td>
+                      <td data-label="Updated"><span className="admin-cell-value">{new Date(room.updated_at).toLocaleDateString()}</span></td>
                       <td data-label="Actions" className="admin-row-actions">
                         {!archiveView ? (
                           <>

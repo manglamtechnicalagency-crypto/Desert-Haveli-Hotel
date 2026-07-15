@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { cloudflareMediaUrl, deleteFromR2, uploadToR2 } from "./cloudflareStorage";
+import { deleteMedia, mediaUrl, uploadMedia } from "./mediaStorage";
 
 export const SITE_IMAGES_BUCKET = "site-images";
 
@@ -32,6 +33,7 @@ export const SITE_IMAGE_SLOTS = [
 
 export function siteImageUrl(storagePath) {
   if (!storagePath) return null;
+  if (storagePath.startsWith("cloudinary://")) return mediaUrl(storagePath);
   if (import.meta.env.VITE_R2_PUBLIC_BASE_URL) return cloudflareMediaUrl(storagePath);
   const { data } = supabase.storage.from(SITE_IMAGES_BUCKET).getPublicUrl(storagePath);
   return data?.publicUrl || null;
@@ -63,7 +65,7 @@ export async function replaceSiteImage(slotKey, file, altText = "") {
   validateSiteImage(file);
   const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "")}`;
   const storagePath = `website/${slotKey}/${uniqueName}`;
-  await uploadToR2(file, storagePath);
+  await uploadMedia(file, storagePath, { resourceType: "image" });
 
   const { data, error } = await supabase.from("site_images").upsert({
     slot_key: slotKey,
@@ -74,14 +76,14 @@ export async function replaceSiteImage(slotKey, file, altText = "") {
     is_active: true,
   }, { onConflict: "slot_key" }).select().single();
   if (error) {
-    await deleteFromR2(storagePath).catch(() => {});
+    await deleteMedia(storagePath).catch(() => {});
     throw error;
   }
   return data;
 }
 
 export async function removeSiteImage(image) {
-  if (image?.storage_path && import.meta.env.VITE_R2_PUBLIC_BASE_URL) await deleteFromR2(image.storage_path);
+  if (image?.storage_path && (image.storage_path.startsWith("cloudinary://") || import.meta.env.VITE_R2_PUBLIC_BASE_URL)) await deleteMedia(image.storage_path);
   else if (image?.storage_path) await supabase.storage.from(SITE_IMAGES_BUCKET).remove([image.storage_path]);
   const { error } = await supabase.from("site_images").delete().eq("slot_key", image.slot_key);
   if (error) throw error;

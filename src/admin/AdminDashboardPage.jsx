@@ -9,16 +9,6 @@ const PRIMARY_STAT_DEFS = [
   ["publishedRooms", "Published"],
 ];
 
-const MORE_STAT_DEFS = [
-  ["draftRooms", "Draft"],
-  ["unavailableRooms", "Unavailable"],
-  ["maintenanceRooms", "Under Maintenance"],
-  ["hiddenRooms", "Hidden"],
-  ["archivedRooms", "Archived"],
-  ["specialPricingToday", "Special Pricing Today"],
-  ["unavailableToday", "Unavailable Today"],
-];
-
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState("");
@@ -54,28 +44,6 @@ export default function AdminDashboardPage() {
               <span>Average Price</span>
             </div>
           </div>
-
-          <details className="admin-advanced">
-            <summary>More stats</summary>
-            <div className="admin-advanced-body">
-              <div className="admin-stat-grid">
-                {MORE_STAT_DEFS.map(([key, label]) => (
-                  <div className="admin-stat-card" key={key}>
-                    <strong>{stats[key]}</strong>
-                    <span>{label}</span>
-                  </div>
-                ))}
-                <div className="admin-stat-card">
-                  <strong>{stats.highestPrice != null ? formatCurrency(stats.highestPrice) : "—"}</strong>
-                  <span>Highest Price</span>
-                </div>
-                <div className="admin-stat-card">
-                  <strong>{stats.lowestPrice != null ? formatCurrency(stats.lowestPrice) : "—"}</strong>
-                  <span>Lowest Price</span>
-                </div>
-              </div>
-            </div>
-          </details>
 
           <div className="admin-quick-actions admin-action-panel">
             <div><span className="admin-kicker">QUICK ACTIONS</span><strong>Keep the guest-facing stay current</strong></div>

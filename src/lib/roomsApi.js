@@ -1,10 +1,12 @@
 import { supabase } from "./supabaseClient";
 import { cloudflareMediaUrl, deleteFromR2, uploadToR2 } from "./cloudflareStorage";
+import { deleteMedia, mediaUrl, uploadMedia } from "./mediaStorage";
 
 const ROOM_IMAGES_BUCKET = "room-images";
 
 export function publicImageUrl(storagePath) {
   if (!storagePath) return null;
+  if (storagePath.startsWith("cloudinary://")) return mediaUrl(storagePath);
   if (import.meta.env.VITE_R2_PUBLIC_BASE_URL) return cloudflareMediaUrl(storagePath);
   const { data } = supabase.storage.from(ROOM_IMAGES_BUCKET).getPublicUrl(storagePath);
   return data?.publicUrl || null;
@@ -14,11 +16,9 @@ export function publicImageUrl(storagePath) {
 /* Public site reads                                                       */
 /* ---------------------------------------------------------------------- */
 
-// Fetch every room that should appear on the public site, plus its images,
-// active features, and pricing/availability data needed to compute an
-// effective price. RLS guarantees only published/visible/non-archived/
-// non-deleted rooms and their children ever come back here, even though we
-// don't repeat those filters client-side.
+// Fetch only the current public inventory. Keep these predicates explicit in
+// addition to RLS so an archived/deleted/draft record can never reappear on
+// the guest site because of a permissive policy or stale backend data.
 export async function fetchPublicRooms() {
   const { data, error } = await supabase
     .from("rooms")
@@ -27,12 +27,17 @@ export async function fetchPublicRooms() {
        booking_note, public_availability_message, max_guests, max_adults, max_children,
        bed_count, bed_type, bathroom_count, room_size, room_size_unit,
        base_price, promotional_price, promotional_price_start_date, promotional_price_end_date, weekend_price, currency, tax_percentage, service_charge,
-       availability_status, is_bookable, display_order,
+       availability_status, is_bookable, is_visible, is_archived, is_deleted, status, display_order,
        room_images ( id, storage_path, alt_text, caption, display_order, is_primary ),
        room_features ( id, name, description, icon_key, point_value, display_order, is_highlighted, is_active ),
        room_price_overrides ( date, price, discount_type, discount_value, pricing_label ),
        room_pricing_rules ( rule_name, rule_type, start_date, end_date, days_of_week, fixed_price, adjustment_type, adjustment_value, priority, is_active, id, created_at )`
     )
+    .eq("status", "published")
+    .eq("is_visible", true)
+    .eq("is_bookable", true)
+    .eq("is_archived", false)
+    .eq("is_deleted", false)
     .order("display_order", { ascending: true })
     .order("priority", { referencedTable: "room_pricing_rules", ascending: false })
     .order("id", { referencedTable: "room_pricing_rules", ascending: true });
@@ -340,7 +345,14 @@ export async function uploadRoomImage(roomId, file, { isPrimary = false, display
   const uniqueName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name.replace(/[^a-zA-Z0-9.\-_]/g, "")}`;
   const storagePath = `rooms/${roomId}/${uniqueName}`;
 
-  await uploadToR2(file, storagePath);
+  if (import.meta.env.VITE_R2_PUBLIC_BASE_URL) {
+    await uploadMedia(file, storagePath, { resourceType: "image" });
+  } else {
+    const { error: storageError } = await supabase.storage
+      .from(ROOM_IMAGES_BUCKET)
+      .upload(storagePath, file, { contentType: file.type, upsert: false });
+    if (storageError) throw storageError;
+  }
 
   if (isPrimary) {
     // Clear any existing primary flag first so the unique partial index never conflicts.
@@ -365,14 +377,14 @@ export async function uploadRoomImage(roomId, file, { isPrimary = false, display
 
   if (error) {
     // Roll back the orphaned storage object if the DB insert failed.
-    await deleteFromR2(storagePath).catch(() => {});
+    await deleteMedia(storagePath).catch(() => {});
     throw error;
   }
   return data;
 }
 
 export async function deleteRoomImage(image) {
-  if (import.meta.env.VITE_R2_PUBLIC_BASE_URL) await deleteFromR2(image.storage_path);
+  if (image.storage_path?.startsWith("cloudinary://") || import.meta.env.VITE_R2_PUBLIC_BASE_URL) await deleteMedia(image.storage_path);
   else await supabase.storage.from(ROOM_IMAGES_BUCKET).remove([image.storage_path]);
   const { error } = await supabase.from("room_images").delete().eq("id", image.id);
   if (error) throw error;
