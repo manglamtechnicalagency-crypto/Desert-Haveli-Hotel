@@ -93,7 +93,7 @@ Desktop/laptop defect remediation is complete locally and awaiting normal releas
 | Check | Latest verified result |
 |---|---|
 | Build | `npm run build` passed on 2026-07-16; Vite still warns of a >500 kB public chunk. |
-| Lint/type check | No scripts configured. |
+| Lint/type check | `npm run lint` passed on 2026-07-16. No type-check script is configured. |
 | Unit/integration suite | No npm scripts configured; targeted Node/recovery schema checks previously passed. |
 | Browser smoke | Chromium local preview passed at four viewport sizes; no Safari/Firefox/real-device pass. |
 | Security | Code/docs review complete; production infrastructure controls remain unverified. |

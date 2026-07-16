@@ -9,6 +9,13 @@ npm install
 npm run dev
 ```
 
+## Verification
+
+```bash
+npm run lint
+npm run build
+```
+
 ## Cloudinary media storage
 
 The admin media uploads support Cloudinary for room photos, website images,
