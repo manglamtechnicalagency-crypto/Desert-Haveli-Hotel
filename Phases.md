@@ -38,7 +38,7 @@
 - Tasks: [x] inspect source/config/docs; [x] classify implemented/partial/missing; [x] create/update root docs; [x] create `Memory.md` after implementation began; [ ] confirm hotel facts and external schema with stakeholders.
 - Deliverables: `PRD.md`, `Architecture.md`, `Rules.md`, `Design.md`, `Phases.md`, stakeholder decision log.
 - Acceptance: every documented current feature maps to a repository path; unknown schema/provider choices are marked open.
-- Test plan: inspect package scripts; run build; no claim of lint/type/test where scripts are absent.
+- Test plan: run `npm run lint` and `npm run build`; do not claim type-check or automated-test coverage while those scripts are absent.
 - Risks: documentation may inherit unverified business copy; mitigate with stakeholder review.
 - Exit criteria: stakeholder confirms facts, scope, and next phase; external schema owner identified.
 
@@ -102,7 +102,7 @@
 
 - Status: In Progress
 - Goal: establish release-grade automated and manual quality gates.
-- Tasks: [ ] add lint/type/test scripts; [ ] pricing/API tests; [ ] commit Playwright smoke suite; [x] local Chromium responsive/keyboard/accessibility smoke checks; [x] security code review and endpoint validation checks; [ ] deployed header/RLS/provider review; [ ] regression snapshots in CI.
+- Tasks: [x] add lint script; [ ] add type-check and test scripts; [ ] pricing/API tests; [ ] commit Playwright smoke suite; [x] local Chromium responsive/keyboard/accessibility smoke checks; [x] security code review and endpoint validation checks; [ ] deployed header/RLS/provider review; [ ] regression snapshots in CI.
 - Acceptance: critical public/admin flows pass automated checks and no known critical security/accessibility defect remains.
 
 ## Phase 10 — Performance optimization

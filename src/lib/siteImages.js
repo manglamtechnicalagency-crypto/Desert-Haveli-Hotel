@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient";
-import { cloudflareMediaUrl, deleteFromR2, uploadToR2 } from "./cloudflareStorage";
+import { cloudflareMediaUrl } from "./cloudflareStorage";
 import { deleteMedia, mediaUrl, uploadMedia } from "./mediaStorage";
 
 export const SITE_IMAGES_BUCKET = "site-images";

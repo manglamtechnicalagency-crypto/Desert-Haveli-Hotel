@@ -31,8 +31,8 @@ flowchart TD
 | Auth | Supabase password auth plus `admin_profiles` lookup and lockout RPCs |
 | Storage | Local public assets; Supabase public URLs; R2 presign/delete; Cloudinary signed uploads/delete |
 | Working features | Public rendering, direct enquiry links, deferred admin route loading, client-rendered route metadata, skip-link access, admin route protection, room/media/content management code paths, pricing calculation, media endpoint input validation |
-| Partial features | PIN recovery endpoints/migration (email delivery template mismatch), guest feedback presentation, video public rendering, reproducible room-schema migrations, automated test/lint/type scripts |
-| Risky areas | External schema dependency; optional environment configuration; user-entered external links; large public bundle; per-instance rate limiting; no test script |
+| Partial features | PIN recovery endpoints/migration (email delivery template mismatch), guest feedback presentation, video public rendering, reproducible room-schema migrations, automated type/test scripts |
+| Risky areas | External schema dependency; optional environment configuration; user-entered external links; large public bundle; per-instance rate limiting; no automated test script |
 
 ## 3. Technology Stack
 
@@ -45,6 +45,7 @@ flowchart TD
 | Framer Motion | Reveal and interaction motion | Respect reduced-motion preference |
 | CSS | Public/admin visual system | Tokens currently live in `src/styles.css`; admin reuses the public brand in `src/admin/admin.css` |
 | AWS S3 SDK/presigner | R2 signing/deletion server code | Keep server-only; no direct secret exposure |
+| ESLint 10 | Static JavaScript/JSX linting | `npm run lint`; React Compiler advisory rules are deferred because existing data-loading effects require a broader refactor |
 | Playwright | Present dependency for browser QA | No npm script currently invokes it |
 | Vercel | Hosting and serverless media/recovery API | Verify deployment environment variables, rewrite behavior, headers, and production rate-limit controls |
 | Resend HTTP API | Admin PIN-recovery delivery | Server-only key and approved sender are required; end-to-end delivery is not yet verified |
@@ -166,7 +167,7 @@ Current controls include eager hero image, lazy content images, responsive objec
 
 ## 17. Testing Architecture
 
-`playwright` is installed but no test scripts are defined. Minimum future suite: pricing unit tests (precedence, weekend, expiry, ties), Supabase integration tests against a disposable project, component tests for booking/admin forms, Playwright public/admin smoke paths at mobile/tablet/desktop, keyboard/accessibility checks, and upload validation tests.
+`npm run lint` provides ESLint checks for the JavaScript/JSX and server-route code. `playwright` is installed but no automated test script is defined. Minimum future suite: pricing unit tests (precedence, weekend, expiry, ties), Supabase integration tests against a disposable project, component tests for booking/admin forms, Playwright public/admin smoke paths at mobile/tablet/desktop, keyboard/accessibility checks, and upload validation tests.
 
 ## 18. Environment Strategy
 

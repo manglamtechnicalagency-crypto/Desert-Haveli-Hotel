@@ -1,5 +1,5 @@
 import { supabase } from "./supabaseClient";
-import { cloudflareMediaUrl, deleteFromR2, uploadToR2 } from "./cloudflareStorage";
+import { cloudflareMediaUrl } from "./cloudflareStorage";
 import { deleteMedia, mediaUrl, uploadMedia } from "./mediaStorage";
 
 const ROOM_IMAGES_BUCKET = "room-images";
@@ -248,26 +248,16 @@ export async function duplicateRoom(id, admin) {
   const original = await fetchAdminRoomById(id);
   if (!original) throw new Error("Room not found");
 
-  const {
-    id: _id,
-    room_images,
-    room_features,
-    room_price_overrides,
-    room_pricing_rules,
-    room_availability,
-    created_at,
-    updated_at,
-    ...rest
-  } = original;
+  const { room_features = [], ...rest } = original;
+  ["id", "room_images", "room_features", "room_price_overrides", "room_pricing_rules", "room_availability", "created_at", "updated_at"].forEach((key) => delete rest[key]);
 
-  let suffix = 1;
   let newRoomNumber = `${rest.room_number}-copy`;
   let newSlug = `${rest.slug}-copy`;
   // Avoid unique-constraint collisions if duplicated more than once.
   // (Best-effort client-side check; the DB unique constraint is the real guard.)
   const { data: clash } = await supabase.from("rooms").select("room_number").eq("room_number", newRoomNumber);
   if (clash && clash.length > 0) {
-    suffix = clash.length + 1;
+    const suffix = clash.length + 1;
     newRoomNumber = `${rest.room_number}-copy-${suffix}`;
     newSlug = `${rest.slug}-copy-${suffix}`;
   }

@@ -48,7 +48,7 @@ Maintain accurate, implementation-aware documentation while hardening the public
 
 ## 6. Current Work in Progress
 
-No code implementation is active at the point of this update. The open work is recorded as phase tasks and blockers below.
+Desktop/laptop defect remediation is complete locally and awaiting normal release review. The open infrastructure, recovery-flow, schema, and production-domain work remains recorded as phase tasks and blockers below.
 
 ## 7. Important Decisions
 
@@ -81,8 +81,7 @@ No code implementation is active at the point of this update. The open work is r
 
 ## 12. Dependencies
 
-- Existing dependencies only: React, React DOM, React Router, Vite, Framer Motion, Supabase JS, AWS S3 SDK/presigner, Playwright.
-- No dependency was added during the documented optimization pass.
+- Existing dependencies include React, React DOM, React Router, Vite, Framer Motion, Supabase JS, AWS S3 SDK/presigner, Playwright, and ESLint with its JavaScript, globals, and React Hooks packages.
 
 ## 13. Environment and Configuration
 
@@ -146,3 +145,45 @@ The public optimization and security hardening are documented and locally verifi
 - Results: documentation now distinguishes verified, partial, and blocked items.
 - Blockers: production domain, base Supabase schema/RLS, recovery completion, media optimization, production infrastructure.
 - Next action: complete and test PIN recovery or export/test the base schema.
+
+### 2026-07-16 — Desktop/laptop booking and navigation defect remediation
+
+- Objective: reproduce and resolve the supplied desktop QA brief without changing the established visual identity.
+- Completed: set both booking flows' default guest count to `2`; made the quick-booking room selector use stable room IDs with an explicit placeholder and unavailable state; ensured the WhatsApp message resolves the selected room name and preserves the default guest count; corrected footer/hash navigation active-state handling; enabled clearing a selected review rating by activating the same rating again.
+- Files changed: `src/App.jsx`, `Memory.md`.
+- Tests run: `npm run build`; Chromium local-preview checks at 1920, 1440, 1366, 1280, 1024, 768, and 390 px; booking option/message test; rating hover/clear test; footer navigation active-state test; console/error, overflow, and missing-image-alt checks.
+- Results: build passed; all seven widths had no horizontal overflow or missing image `alt` attributes; no console errors were observed; footer Restaurant, Explore, Gallery, and Booking links activated the matching navigation item; rating hover highlighted preceding stars and reactivating a selected rating cleared it.
+- Notes: existing CSS already provided the reported hero gutter, card CTA bottom alignment, normalized inter-section spacing, inline required-marker rendering, and grid-based footer (no vertical divider elements were present to repair).
+- Next action: run cross-browser/real-device QA before a production release, and resolve the separate PIN-recovery and environment blockers above.
+
+### 2026-07-16 — Mobile booking CTA refinement
+
+- Objective: improve the compact booking control after visual review.
+- Completed: replaced the cramped pill layout with a 22px-radius direct-booking card hierarchy: planning label, primary action, compact offer badge, and explicit arrow affordance.
+- Files changed: `src/App.jsx`, `src/styles.css`, `Memory.md`.
+- Tests run: `npm run build`; Chromium 390x844 screenshot and console/overflow check.
+- Results: build passed; CTA rendered at 368x88 px with no horizontal overflow or console errors; opening behaviour was preserved.
+
+### 2026-07-16 — Mobile gallery rendering stabilization
+
+- Objective: resolve empty-looking gallery cards reported on mobile.
+- Completed: made the first visible gallery image eager and moved the alternating aspect-ratio frame from each image to its card; gallery images now fill stable frames with `object-fit: cover`.
+- Files changed: `src/App.jsx`, `src/styles.css`, `Memory.md`.
+- Tests run: `npm run build`; Chromium 390x844 gallery screenshot after first-image load; console and overflow checks.
+- Results: first gallery image was decoded before gallery navigation, the mobile capture displayed the image correctly, and no overflow or console errors were observed.
+
+### 2026-07-16 — Hash-navigation settling for lazy content
+
+- Objective: prevent Explore/Gallery anchor navigation from drifting after lazy-loaded content changes page height.
+- Completed: added a short, bounded hash-target alignment cycle after a menu or footer hash navigation event.
+- Files changed: `src/App.jsx`, `Memory.md`.
+- Tests run: `npm run build`; Chromium desktop Explore navigation test after 5.2 seconds of content settling.
+- Results: `#explore` remained at the 112px navigation offset, the Explore item remained active, and no console errors were observed.
+
+### 2026-07-16 — ESLint quality gate
+
+- Objective: provide the missing `npm run lint` command reported by the operator.
+- Completed: added ESLint 10 flat configuration, `npm run lint`, JSX parsing, browser/server globals, React Hooks rules, and removed unused imports/declarations and redundant assignments found by the initial pass.
+- Files changed: `package.json`, `package-lock.json`, `eslint.config.js`, selected `src/admin/*`, `src/lib/*`, `src/App.jsx`, `src/main.jsx`, and project documentation.
+- Tests run: `npm run lint`; `npm run build`; diff whitespace check.
+- Results: lint completed with no warnings or errors; production build passed. Type-check and automated browser/API test scripts remain outstanding.

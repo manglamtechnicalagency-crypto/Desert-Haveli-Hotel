@@ -5,7 +5,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   // Fail loudly in dev rather than silently returning a broken client.
-  // eslint-disable-next-line no-console
   console.error(
     "Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. Add them to .env.local (local) " +
       "and to your Vercel project's Environment Variables (production)."

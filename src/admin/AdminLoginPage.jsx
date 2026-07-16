@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { signInAdmin, checkLoginLockout, recordLoginAttempt, requestPinReset, verifyPinReset } from "../lib/roomsApi";
 import { useAdminAuth } from "./AdminAuthContext";
@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
   // (SECURITY DEFINER functions backed by the admin_login_attempts table).
   // They are NOT the source of truth -- a page reload re-fetches the real
   // state from the database instead of resetting to "not locked".
-  const [attempts, setAttempts] = useState(0);
+  const [, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(null);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [recoveryStep, setRecoveryStep] = useState("email");
@@ -151,7 +151,7 @@ export default function AdminLoginPage() {
 
       await refreshProfile();
       navigate("/admin", { replace: true });
-    } catch (err) {
+    } catch {
       setDigits(Array(PIN_LENGTH).fill(""));
       restorePinFocusRef.current = true;
       if (postAttemptState?.is_locked) {

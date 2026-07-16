@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { SITE_IMAGES_BUCKET } from "./siteImages";
-import { cloudflareMediaUrl, uploadToR2 } from "./cloudflareStorage";
+import { cloudflareMediaUrl } from "./cloudflareStorage";
 import { mediaUrl, uploadMedia } from "./mediaStorage";
 
 export const MAX_VIDEO_BYTES = 200 * 1024 * 1024;

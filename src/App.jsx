@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   attractions,
@@ -68,7 +68,8 @@ function Reveal({ children, className = "" }) {
 function Navbar() {
   const [open, setOpen] = useState(false);
   const [solid, setSolid] = useState(false);
-  const [activeId, setActiveId] = useState("home");
+  const [activeId, setActiveId] = useState(() => window.location.hash.slice(1) || "home");
+  const navigationLockUntil = useRef(0);
 
   React.useEffect(() => {
     const onScroll = () => setSolid(window.scrollY > 48);
@@ -82,18 +83,34 @@ function Navbar() {
       .map(([, id]) => document.getElementById(id))
       .filter(Boolean);
     if (!sections.length) return undefined;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) setActiveId(visible.target.id);
-      },
-      { rootMargin: "-22% 0px -62% 0px", threshold: [0.1, 0.35, 0.7] }
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+    const updateActiveSection = () => {
+      const anchorLine = 128;
+      const closest = sections.reduce((current, section) => (
+        Math.abs(section.getBoundingClientRect().top - anchorLine) < Math.abs(current.getBoundingClientRect().top - anchorLine)
+          ? section
+          : current
+      ));
+      setActiveId(closest.id);
+    };
+    const onHashChange = () => {
+      const id = window.location.hash.slice(1);
+      if (sections.some((section) => section.id === id)) {
+        navigationLockUntil.current = Date.now() + 800;
+        setActiveId(id);
+      }
+    };
+    const onScroll = () => {
+      if (Date.now() >= navigationLockUntil.current) updateActiveSection();
+    };
+    updateActiveSection();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+    window.addEventListener("hashchange", onHashChange);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", updateActiveSection);
+      window.removeEventListener("hashchange", onHashChange);
+    };
   }, []);
 
   return (
@@ -108,7 +125,7 @@ function Navbar() {
       {open && <button className="nav-scrim" type="button" aria-label="Close navigation" onClick={() => setOpen(false)} />}
       <nav id="main-menu" className={open ? "open" : ""}>
         {navItems.map(([label, id]) => (
-          <a key={id} className={activeId === id ? "active" : ""} href={`#${id}`} aria-current={activeId === id ? "page" : undefined} onClick={() => { setActiveId(id); setOpen(false); }}>{label}</a>
+          <a key={id} className={activeId === id ? "active" : ""} href={`#${id}`} aria-current={activeId === id ? "page" : undefined} onClick={() => { navigationLockUntil.current = Date.now() + 800; setActiveId(id); setOpen(false); }}>{label}</a>
         ))}
         <a className="nav-cta" data-cta="contact-whatsapp" href={whatsappUrl()} target="_blank" rel="noreferrer">
           WhatsApp
@@ -141,12 +158,14 @@ function Hero() {
 }
 
 function BookingBar({ rooms }) {
-  const [form, setForm] = useState({ checkin: "", checkout: "", guests: "", room: rooms[0]?.name || "" });
+  const [form, setForm] = useState({ checkin: "", checkout: "", guests: "2", room: "" });
   const [compact, setCompact] = useState(false);
   const [showBookingBar, setShowBookingBar] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });
-  const message = `Hello Desert Haveli Guest House,\nI want to enquire about room booking.\n\nCheck-in: ${form.checkin}\nCheck-out: ${form.checkout}\nGuests: ${form.guests}\nPreferred Room: ${form.room}\n\nPlease confirm availability and price.`;
+  const availableRooms = useMemo(() => rooms.filter((room) => room?.id && room?.name), [rooms]);
+  const selectedRoom = availableRooms.find((room) => String(room.id) === form.room);
+  const update = (event) => setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
+  const message = `Hello Desert Haveli Guest House,\nI want to enquire about room booking.\n\nCheck-in: ${form.checkin}\nCheck-out: ${form.checkout}\nGuests: ${Math.max(1, Number(form.guests) || 2)}\nPreferred Room: ${selectedRoom?.name || "No preference"}\n\nPlease confirm availability and price.`;
 
   React.useEffect(() => {
     const onScroll = () => {
@@ -167,9 +186,10 @@ function BookingBar({ rooms }) {
   }, []);
 
   React.useEffect(() => {
-    if (!form.room && rooms.length > 0) setForm((f) => ({ ...f, room: rooms[0].name }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rooms]);
+    if (form.room && !availableRooms.some((room) => String(room.id) === form.room)) {
+      setForm((current) => ({ ...current, room: "" }));
+    }
+  }, [availableRooms, form.room]);
 
   React.useEffect(() => {
     document.body.classList.toggle("booking-modal-open", compact && modalOpen);
@@ -192,16 +212,17 @@ function BookingBar({ rooms }) {
       <section className={`booking-bar ${compact ? "capsule" : ""}`} aria-label="Quick booking enquiry">
       {compact ? (
         <button className="booking-capsule" type="button" aria-expanded={modalOpen} aria-controls="booking-modal" onClick={() => setModalOpen(true)}>
-          <span>Check dates</span>
-          <strong>Book Direct</strong>
-          <small className="booking-offer"><b>OFFER</b> Get an extra discount when you book here</small>
+          <span>Plan your stay</span>
+          <strong>Check dates &amp; book direct</strong>
+          <small className="booking-offer"><b>DIRECT OFFER</b> Extra discount on direct booking</small>
+          <i className="booking-capsule-arrow" aria-hidden="true">→</i>
         </button>
       ) : (
         <>
       <label>Check-in<input name="checkin" type="date" value={form.checkin} onChange={update} /></label>
       <label>Check-out<input name="checkout" type="date" value={form.checkout} onChange={update} /></label>
-      <label>Guests<input name="guests" min="1" type="number" placeholder="2" value={form.guests} onChange={update} /></label>
-      <label>Preferred room<select name="room" value={form.room} onChange={update}>{rooms.map((room) => <option key={room.name}>{room.name}</option>)}</select></label>
+      <label>Guests<input name="guests" min="1" type="number" value={form.guests} onChange={update} /></label>
+      <label>Preferred room<select name="room" value={form.room} onChange={update} disabled={availableRooms.length === 0}><option value="">{availableRooms.length ? "Select preferred room" : "Rooms unavailable — contact hotel"}</option>{availableRooms.map((room) => <option key={room.id} value={String(room.id)}>{room.name}</option>)}</select></label>
       <a className="btn primary booking-whatsapp-btn" data-cta="whatsapp-booking" href={whatsappUrl(message)} target="_blank" rel="noreferrer"><span>Book on WhatsApp</span><small>Extra discount when you book direct</small></a>
         </>
       )}
@@ -216,8 +237,8 @@ function BookingBar({ rooms }) {
             <div className="booking-modal-fields">
               <label>Check-in<input name="checkin" type="date" value={form.checkin} onChange={update} /></label>
               <label>Check-out<input name="checkout" type="date" value={form.checkout} onChange={update} /></label>
-              <label>Guests<input name="guests" min="1" type="number" placeholder="2" value={form.guests} onChange={update} /></label>
-              <label>Preferred room<select name="room" value={form.room} onChange={update}>{rooms.map((room) => <option key={room.name}>{room.name}</option>)}</select></label>
+              <label>Guests<input name="guests" min="1" type="number" value={form.guests} onChange={update} /></label>
+              <label>Preferred room<select name="room" value={form.room} onChange={update} disabled={availableRooms.length === 0}><option value="">{availableRooms.length ? "Select preferred room" : "Rooms unavailable — contact hotel"}</option>{availableRooms.map((room) => <option key={room.id} value={String(room.id)}>{room.name}</option>)}</select></label>
             </div>
             <p className="booking-discount-note">Book directly with the hotel to ask about your best available rate.</p>
             <a className="btn primary booking-whatsapp-btn" data-cta="whatsapp-booking" href={whatsappUrl(message)} target="_blank" rel="noreferrer" onClick={() => setModalOpen(false)}><span>Book on WhatsApp</span><small>Extra discount when you book direct</small></a>
@@ -626,7 +647,7 @@ function Gallery({ uploadedImages = [] }) {
       <div className="gallery-grid">
         {filtered.map(([type, src, alt], index) => (
           <button className="gallery-item" key={`${type}-${index}`} onClick={() => setActive({ src, alt })}>
-            <img loading="lazy" src={src} alt={alt} />
+            <img loading={index === 0 ? "eager" : "lazy"} fetchPriority={index === 0 ? "low" : undefined} src={src} alt={alt} />
             <span>{type}</span>
           </button>
         ))}
@@ -637,26 +658,6 @@ function Gallery({ uploadedImages = [] }) {
           <img src={active.src} alt={active.alt} />
         </div>
       )}
-    </section>
-  );
-}
-
-function Story() {
-  const blocks = [
-    [sectionText("morning-inside-fort", "title", "Morning Inside the Fort"), images.exterior],
-    [sectionText("heritage-room-details", "title", "Heritage Room Details"), images.heritage],
-    [sectionText("golden-sunset-view", "title", "Golden Sunset View"), images.sunset],
-    [sectionText("traditional-haveli-ambience", "title", "Traditional Haveli Ambience"), images.interior],
-    [sectionText("jaisalmer-street-life", "title", "Jaisalmer Street Life"), images.street]
-  ];
-  return (
-    <section className="story-strip">
-      {blocks.map(([title, src]) => (
-        <article key={title}>
-          <img loading="lazy" src={src} alt={`${title} at Desert Haveli Guest House Jaisalmer`} />
-          <h3>{title}</h3>
-        </article>
-      ))}
     </section>
   );
 }
@@ -742,7 +743,7 @@ function Nearby() {
 }
 
 function BookingForm({ rooms }) {
-  const initial = { name: "", phone: "", email: "", checkin: "", checkout: "", guests: "", room: "", service: "Room Booking", message: "" };
+  const initial = { name: "", phone: "", email: "", checkin: "", checkout: "", guests: "2", room: "", service: "Room Booking", message: "" };
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -936,7 +937,7 @@ function ReviewsTrust() {
         <div className="review-actions">
           <div className="rating-picker" role="group" aria-label="Choose your rating">
             {[1, 2, 3, 4, 5].map((value) => (
-              <button key={value} type="button" className={value <= (hoverRating || rating) ? "selected" : ""} onMouseEnter={() => setHoverRating(value)} onMouseLeave={() => setHoverRating(0)} onFocus={() => setHoverRating(value)} onBlur={() => setHoverRating(0)} onClick={() => setRating(value)} aria-label={`${value} star${value === 1 ? "" : "s"}`} aria-pressed={value <= rating}>★</button>
+              <button key={value} type="button" className={value <= (hoverRating || rating) ? "selected" : ""} onMouseEnter={() => setHoverRating(value)} onMouseLeave={() => setHoverRating(0)} onFocus={() => setHoverRating(value)} onBlur={() => setHoverRating(0)} onClick={() => setRating((current) => current === value ? 0 : value)} aria-label={`${value} star${value === 1 ? "" : "s"}${rating === value ? ", selected; activate again to clear" : ""}`} aria-pressed={rating === value}>★</button>
             ))}
           </div>
           <label className="review-input-label" htmlFor="guest-review">Your review</label>
@@ -1158,6 +1159,30 @@ function App({ initialSection, legalPage, pageMetadata }) {
     const frame = requestAnimationFrame(() => document.getElementById(initialSection)?.scrollIntoView({ block: "start" }));
     return () => cancelAnimationFrame(frame);
   }, [initialSection, legalPage, roomsLoading, galleryLoading, sectionsLoading]);
+
+  useEffect(() => {
+    if (legalPage) return undefined;
+    let settleTimer;
+    const alignHashTarget = () => {
+      window.clearInterval(settleTimer);
+      const targetId = decodeURIComponent(window.location.hash.slice(1));
+      const target = targetId && document.getElementById(targetId);
+      if (!target) return;
+      let attempts = 0;
+      const align = () => {
+        target.scrollIntoView({ block: "start" });
+        attempts += 1;
+        if (attempts >= 16) window.clearInterval(settleTimer);
+      };
+      requestAnimationFrame(align);
+      settleTimer = window.setInterval(align, 300);
+    };
+    window.addEventListener("hashchange", alignHashTarget);
+    return () => {
+      window.removeEventListener("hashchange", alignHashTarget);
+      window.clearInterval(settleTimer);
+    };
+  }, [legalPage]);
 
   useEffect(() => {
     if (!pageMetadata) return;

@@ -1,15 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fetchAdminSiteImages, removeSiteImage, replaceSiteImage, siteImageUrl, SITE_IMAGE_SLOTS } from "../lib/siteImages";
 import { images } from "../data";
 import { fetchAdminSections, SECTION_DEFAULTS, saveSection, publishSection } from "../lib/siteContent";
-import { fetchAdminVideos, MAX_VIDEO_BYTES, MAX_VIDEO_SECONDS, readVideoMetadata, siteVideoUrl, uploadSiteVideo, validateVideoFile } from "../lib/siteVideos";
+import { fetchAdminVideos, MAX_VIDEO_SECONDS, readVideoMetadata, siteVideoUrl, uploadSiteVideo, validateVideoFile } from "../lib/siteVideos";
 import { deleteGalleryImage, fetchAdminGalleryImages, galleryImageUrl, GALLERY_CATEGORIES, uploadGalleryImage } from "../lib/siteGallery";
-
-const SECTION_PREVIEW_KEYS = {
-  hero: "hero", "haveli-stay": "hotelExteriorReal", "heritage-rooms": "heritageRoomReal", "rooftop-restaurant": "rooftopRestaurant",
-  "morning-inside-fort": "exterior", "heritage-room-details": "roomDetailReal", "golden-sunset-view": "sunset", "traditional-haveli-ambience": "interior", "jaisalmer-street-life": "street",
-  "room-gallery": "heritageRoomReal", "explore-jaisalmer": "jaisalmerFortView", "guest-experiences": "haveliSittingReal", "hotel-facilities": "hotelExteriorReal", contact: "hotelExteriorReal", footer: "hero"
-};
 
 export default function AdminSiteImagesPage() {
   const [saved, setSaved] = useState([]);

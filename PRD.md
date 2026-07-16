@@ -44,7 +44,7 @@ The core problem is that prospective guests need trustworthy visual context and 
 - Booking CTA includes check-in, check-out, guests, and room when entered by the guest.
 - Admin unauthenticated users cannot reach protected admin pages; admin login is server-backed by Supabase Auth and login attempts are rate/lockout controlled by database RPCs.
 - Media upload rejects videos over 200 MB or 15 seconds as implemented in `src/lib/siteVideos.js`.
-- Every release has documented lint/type/test/build status; currently only build/dev/preview scripts are declared in `package.json`.
+- Every release has documented lint/type/test/build status. `npm run lint` and `npm run build` are currently available; type-check and automated test scripts remain outstanding.
 
 ## 4. Non-Goals
 
@@ -241,7 +241,7 @@ CTA elements expose `data-cta` values such as `whatsapp-booking`, `contact-whats
 
 ## 20. Dependencies
 
-Node/npm, React 19, Vite 6, React Router 6, Framer Motion, Supabase JS, AWS S3 SDK/presigner, Playwright dependency, Supabase schema/functions, Cloudinary/R2 configuration, Vercel hosting, and approved hotel media/content.
+Node/npm, React 19, Vite 6, React Router 6, Framer Motion, Supabase JS, AWS S3 SDK/presigner, ESLint, Playwright dependency, Supabase schema/functions, Cloudinary/R2 configuration, Vercel hosting, and approved hotel media/content.
 
 ## 21. Risks
 
@@ -251,7 +251,7 @@ Node/npm, React 19, Vite 6, React Router 6, Framer Motion, Supabase JS, AWS S3 S
 | Indicative data becomes stale | Medium | High | Admin content ownership and release review | Hotel operator |
 | Storage provider configuration mismatch | Medium | High | Test each configured path; keep provider abstraction | Developer |
 | Direct enquiry is mistaken for confirmed booking | Medium | High | Copy explicitly says hotel confirmation is required | Product owner |
-| No automated lint/type/test scripts | High | Medium | Add validation scripts before production gate | Developer/QA |
+| Missing type-check and automated test scripts | High | Medium | Add validation scripts before production gate | Developer/QA |
 | Accessibility or responsive regressions | Medium | Medium | Playwright viewport and keyboard checks | QA |
 | Incorrect production hostname in robots/sitemap | Medium | High | Confirm canonical domain before deployment and update all crawl directives together | Product owner/DevOps |
 | Large local media delays mobile LCP | High | High | Replace with approved compressed derivatives and measure on production/staging | Content owner/Developer |

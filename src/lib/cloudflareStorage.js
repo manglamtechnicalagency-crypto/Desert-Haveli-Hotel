@@ -9,7 +9,7 @@ export async function uploadToR2(file, key) {
     body: JSON.stringify({ key, contentType: file.type, size: file.size })
   });
   const responseText = await response.text();
-  let result = {};
+  let result;
   try {
     result = responseText ? JSON.parse(responseText) : {};
   } catch {

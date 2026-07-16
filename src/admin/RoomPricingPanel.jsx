@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { deletePriceOverride, deletePricingRule, upsertPriceOverride, upsertPricingRule } from "../lib/roomsApi";
 import { formatCurrency, getNightlyPrice } from "../lib/pricing";

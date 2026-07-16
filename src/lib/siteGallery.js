@@ -1,6 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { SITE_IMAGES_BUCKET } from "./siteImages";
-import { cloudflareMediaUrl, deleteFromR2, uploadToR2 } from "./cloudflareStorage";
+import { cloudflareMediaUrl } from "./cloudflareStorage";
 import { deleteMedia, mediaUrl, uploadMedia } from "./mediaStorage";
 
 export const GALLERY_SECTION_KEY = "room-gallery";
