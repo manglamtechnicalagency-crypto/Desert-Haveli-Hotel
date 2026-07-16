@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import App from "./App";
 
 const AdminApp = lazy(() => import("./admin/AdminApp"));
@@ -97,6 +98,7 @@ function Root() {
         </Routes>
       </BrowserRouter>
       <Analytics />
+      <SpeedInsights />
     </ErrorBoundary>
   );
 }
