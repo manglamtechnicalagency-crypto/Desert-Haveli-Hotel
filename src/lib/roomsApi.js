@@ -103,6 +103,30 @@ export async function recordLoginAttempt(email, success) {
   return (data && data[0]) || { is_locked: false, locked_until: null, failed_count: 0 };
 }
 
+export async function requestPinReset(email) {
+  const response = await fetch("/api/admin/request-pin-reset", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload?.error?.message || "Unable to send OTP.");
+  return payload;
+}
+
+export async function verifyPinReset(email, otp) {
+  const response = await fetch("/api/admin/verify-pin-reset", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email, otp }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload?.error?.message || "Invalid or expired OTP.");
+  const { data, error } = await supabase.auth.verifyOtp({ token_hash: payload.token_hash, type: "recovery" });
+  if (error) throw error;
+  return data;
+}
+
 export async function signOutAdmin() {
   await supabase.auth.signOut();
 }

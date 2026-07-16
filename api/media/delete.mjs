@@ -1,14 +1,20 @@
-import { json, removeObject, requireAdmin } from "../_lib/r2.mjs";
+import { removeObject, requireAdmin } from "../_lib/r2.mjs";
+import { assertRequestBody, assertStorageKey, checkRateLimit, rateLimitResponse, requestId, safeErrorResponse } from "../_lib/security.mjs";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ success: false, message: "Method not allowed" });
+  const id = requestId(req);
+  if (req.method !== "POST") return res.status(405).json({ success: false, error: { code: "METHOD_NOT_ALLOWED", message: "Method not allowed", requestId: id } });
   try {
-    await requireAdmin(req);
-    const { key } = req.body || {};
-    if (!key || key.includes("..") || key.startsWith("/")) throw new Error("Invalid media key");
+    const ipLimit = checkRateLimit(req, "admin");
+    if (!ipLimit.allowed) return rateLimitResponse(res, id, ipLimit.retryAfter);
+    const { user } = await requireAdmin(req);
+    const accountLimit = checkRateLimit(req, "admin", user.id);
+    if (!accountLimit.allowed) return rateLimitResponse(res, id, accountLimit.retryAfter);
+    const { key } = assertRequestBody(req.body, ["key"]);
+    assertStorageKey(key);
     await removeObject(key);
     return res.status(200).json({ success: true });
   } catch (error) {
-    return res.status(error.message === "Unauthorised" ? 401 : error.message === "Forbidden" ? 403 : 400).json({ success: false, message: error.message });
+    return safeErrorResponse(res, error, id);
   }
 }

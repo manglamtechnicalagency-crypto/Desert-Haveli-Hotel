@@ -149,6 +149,7 @@ nav a:hover, nav a.active { color: var(--gold); }
 
 .hero-content {
   width: min(1180px, calc(100% - 36px));
+  margin-inline: auto;
   padding: 124px 0 clamp(76px, 10vh, 128px);
 }
 
@@ -264,6 +265,21 @@ h1 {
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
 }
+
+.skip-link {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 200;
+  transform: translateY(-160%);
+  padding: 12px 16px;
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 900;
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus { transform: translateY(0); outline: 3px solid white; outline-offset: 2px; }
 
 .booking-capsule,
 .booking-minimize {
@@ -672,6 +688,8 @@ td a { color: var(--maroon); font-weight: 900; }
 }
 
 .service-card {
+  display: flex;
+  flex-direction: column;
   padding: 24px;
 }
 
@@ -686,7 +704,7 @@ td a { color: var(--maroon); font-weight: 900; }
 .restaurant .menu-card {
   position: relative;
   min-height: 172px;
-  padding: 28px 24px 24px;
+  padding: 46px 24px 24px;
   background: rgba(255, 248, 234, 0.78);
   border: 1px solid rgba(201, 151, 69, 0.28);
   border-top: 3px solid rgba(201, 151, 69, 0.64);
@@ -736,6 +754,8 @@ td a { color: var(--maroon); font-weight: 900; }
   color: var(--maroon);
   font-weight: 900;
 }
+
+.service-card a { margin-top: auto; padding-top: 18px; }
 
 .restaurant {
   width: 100%;
@@ -803,7 +823,10 @@ td a { color: var(--maroon); font-weight: 900; }
 
 .facilities {
   width: min(1180px, calc(100% - 36px));
+  padding-bottom: clamp(46px, 6vw, 76px);
 }
+
+.facilities + .section { padding-top: clamp(46px, 6vw, 76px); }
 
 .facility-columns {
   display: grid;
@@ -1096,6 +1119,7 @@ td a { color: var(--maroon); font-weight: 900; }
 }
 
 .booking-form label { min-width: 0; }
+.booking-form .field-label { display: inline; }
 .booking-form input, .booking-form select, .booking-form textarea { border-radius: 4px; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
 .booking-form input:focus, .booking-form select:focus, .booking-form textarea:focus { border-color: var(--sand); box-shadow: 0 0 0 3px rgba(228, 184, 98, 0.18); outline: none; }
 .booking-form .full { grid-column: 1 / -1; }
@@ -1190,6 +1214,11 @@ td a { color: var(--maroon); font-weight: 900; }
 .rating-picker button { padding: 0 2px; border: 0; background: transparent; color: rgba(255, 248, 234, 0.34); font-size: 30px; line-height: 1; cursor: pointer; transition: color 0.2s ease, transform 0.2s ease; }
 .rating-picker button:hover, .rating-picker button.selected { color: var(--gold); transform: translateY(-2px); }
 
+.trust { padding-bottom: clamp(46px, 6vw, 76px); }
+.trust + .contact { padding-top: clamp(46px, 6vw, 76px); }
+.contact { padding-bottom: clamp(46px, 6vw, 76px); }
+.contact + .faq { padding-top: clamp(46px, 6vw, 76px); }
+
 .contact-grid {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
@@ -1271,6 +1300,30 @@ summary {
 }
 
 details p { margin-bottom: 0; color: var(--muted); }
+
+.legal-page {
+  min-height: 62vh;
+  padding-top: clamp(120px, 15vw, 170px);
+}
+
+.legal-page .faq-list article {
+  background: rgba(255, 248, 234, 0.82);
+  border: 1px solid var(--line);
+  padding: 22px 24px;
+  box-shadow: 0 12px 28px rgba(42, 22, 15, 0.06);
+}
+
+.legal-page .faq-list h2 {
+  margin: 0 0 10px;
+  color: var(--brown);
+  font-size: clamp(24px, 3vw, 34px);
+}
+
+.legal-page .faq-list p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
 
 .site-footer {
   position: relative;

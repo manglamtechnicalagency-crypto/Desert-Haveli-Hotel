@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/admin/rooms/new", label: "Add Room" },
   { to: "/admin/rooms/archive", label: "Archive" },
   { to: "/admin/website-photos", label: "Media Library" },
+  { to: "/admin/security", label: "Security" },
 ];
 
 export default function AdminLayout() {

@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { signInAdmin, checkLoginLockout, recordLoginAttempt } from "../lib/roomsApi";
+import { signInAdmin, checkLoginLockout, recordLoginAttempt, requestPinReset, verifyPinReset } from "../lib/roomsApi";
 import { useAdminAuth } from "./AdminAuthContext";
+import { supabase } from "../lib/supabaseClient";
 
 const PIN_LENGTH = 6;
 const ADMIN_LOGIN_EMAIL = import.meta.env.VITE_ADMIN_LOGIN_EMAIL;
@@ -20,6 +21,14 @@ export default function AdminLoginPage() {
   // state from the database instead of resetting to "not locked".
   const [attempts, setAttempts] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(null);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [recoveryStep, setRecoveryStep] = useState("email");
+  const [recoveryOtp, setRecoveryOtp] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [recoveryMessage, setRecoveryMessage] = useState("");
+  const [recoveryError, setRecoveryError] = useState("");
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
   const inputsRef = useRef([]);
   const restorePinFocusRef = useRef(false);
 
@@ -134,6 +143,7 @@ export default function AdminLoginPage() {
         if (postAttemptState) {
           setAttempts(postAttemptState.failed_count || 0);
           setLockedUntil(postAttemptState.is_locked ? new Date(postAttemptState.locked_until).getTime() : null);
+          if ((postAttemptState.failed_count || 0) >= 3 || postAttemptState.is_locked) setRecoveryOpen(true);
         }
       }
 
@@ -151,6 +161,41 @@ export default function AdminLoginPage() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function sendRecoveryOtp(event) {
+    event.preventDefault();
+    setRecoveryLoading(true);
+    setRecoveryError("");
+    setRecoveryMessage("");
+    try {
+      await requestPinReset(ADMIN_LOGIN_EMAIL);
+      setRecoveryStep("otp");
+      setRecoveryMessage("OTP sent. Check the administrator email address.");
+    } catch (err) {
+      setRecoveryError(err.message);
+    } finally {
+      setRecoveryLoading(false);
+    }
+  }
+
+  async function verifyRecoveryOtp(event) {
+    event.preventDefault();
+    if (!/^\d{6}$/.test(recoveryOtp)) return setRecoveryError("Enter six-digit recovery code.");
+    if (!/^\d{6}$/.test(newPin) || newPin !== confirmPin) return setRecoveryError("Enter matching six-digit PINs.");
+    setRecoveryLoading(true);
+    setRecoveryError("");
+    try {
+      await verifyPinReset(ADMIN_LOGIN_EMAIL, recoveryOtp);
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPin });
+      if (updateError) throw updateError;
+      await refreshProfile();
+      navigate("/admin", { replace: true });
+    } catch (err) {
+      setRecoveryError(err.message || "Unable to reset PIN.");
+    } finally {
+      setRecoveryLoading(false);
     }
   }
 
@@ -211,6 +256,35 @@ export default function AdminLoginPage() {
           </button>
           <small className="admin-auth-help">For authorised hotel staff only. Contact the administrator if you need access.</small>
         </form>
+        {recoveryOpen && (
+          <div className="admin-recovery-modal" role="dialog" aria-modal="true" aria-labelledby="recovery-title">
+            <div className="admin-recovery-card">
+              <button className="admin-recovery-close" type="button" onClick={() => setRecoveryOpen(false)} aria-label="Close PIN recovery">×</button>
+              <span className="admin-auth-eyebrow">PIN recovery</span>
+              <h2 id="recovery-title">Reset your access PIN</h2>
+              {recoveryStep === "email" ? (
+                <form onSubmit={sendRecoveryOtp}>
+                  <p>After three incorrect trials, verify the administrator email to receive a six-digit recovery code.</p>
+                  <span className="admin-recovery-locked-email"><strong>Administrator email</strong><span>{ADMIN_LOGIN_EMAIL}</span><small>Recovery is restricted to this configured address.</small></span>
+                  <button className="btn primary" type="submit" disabled={recoveryLoading}>{recoveryLoading ? "Sending…" : "Send OTP"}</button>
+                </form>
+              ) : (
+                <form onSubmit={verifyRecoveryOtp}>
+                  <p>{recoveryMessage || "Enter the six-digit recovery code sent to your email, then choose a new six-digit PIN."}</p>
+                  <label htmlFor="recovery-otp">Six-digit recovery code</label>
+                  <input id="recovery-otp" inputMode="numeric" maxLength={6} value={recoveryOtp} onChange={(e) => setRecoveryOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} required />
+                  <label htmlFor="new-pin">New six-digit PIN</label>
+                  <input id="new-pin" type="password" inputMode="numeric" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 6))} required />
+                  <label htmlFor="confirm-pin">Confirm new PIN</label>
+                  <input id="confirm-pin" type="password" inputMode="numeric" maxLength={6} value={confirmPin} onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 6))} required />
+                  <button className="btn primary" type="submit" disabled={recoveryLoading}>{recoveryLoading ? "Resetting…" : "Reset PIN and open panel"}</button>
+                  <button className="admin-link-button" type="button" onClick={() => { setRecoveryStep("email"); setRecoveryMessage(""); setRecoveryError(""); }}>Send a new OTP</button>
+                </form>
+              )}
+              {recoveryError && <p className="admin-form-error" role="alert">{recoveryError}</p>}
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>

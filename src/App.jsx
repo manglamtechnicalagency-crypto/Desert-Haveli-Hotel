@@ -597,7 +597,6 @@ function Gallery({ uploadedImages = [] }) {
   const [active, setActive] = useState(null);
   const gallery = [
     ["Rooms", images.heritageRoomReal, "Real heritage room at Desert Haveli Guest House"],
-    ["Rooms", images.demoModern, "Jaisalmer-themed demo modern heritage room"],
     ["Interior", images.roomDetailReal, "Real room mirror and heritage arch detail"],
     ["Interior", images.haveliSittingReal, "Real haveli sitting area inside Desert Haveli Guest House"],
     ["Interior", images.haveliInteriorReal, "Real haveli interior and window seating"],
@@ -607,8 +606,7 @@ function Gallery({ uploadedImages = [] }) {
     ["Exterior", images.exterior, "Golden Fort exterior"],
     ["Exterior", images.hotelExteriorReal, "Real Desert Haveli Guest House exterior"],
     ["Jaisalmer", images.sunset, "Sunset near Jaisalmer heritage architecture"],
-    ["Interior", images.street, "Jaisalmer fort street life"],
-    ["Rooms", images.demoPrincess, "Jaisalmer-themed demo premium heritage room"]
+    ["Interior", images.street, "Jaisalmer fort street life"]
   ];
   const uploaded = uploadedImages.map((item) => [item.category || "Rooms", galleryImageUrl(item.storage_path), item.alt_text || item.title || "Gallery image"]);
   const tabs = ["All", ...new Set(["Rooms", "Restaurant", "Fort View", "Interior", "Exterior", "Jaisalmer", ...uploaded.map(([type]) => type)])];
@@ -812,7 +810,7 @@ function BookingForm({ rooms }) {
           ["guests", "Number of Guests", "number", true]
         ].map(([name, label, type, isRequired]) => (
           <label key={name}>
-            {label}{isRequired && <span aria-hidden="true"> *</span>}
+            <span className="field-label">{label}{isRequired && <span aria-hidden="true"> *</span>}</span>
             <input
               name={name}
               type={type}
@@ -829,7 +827,7 @@ function BookingForm({ rooms }) {
             {errors[name] && <small id={`${name}-error`} role="alert">{errors[name]}</small>}
           </label>
         ))}
-        <label>Preferred Room{form.service === "Room Booking" && <span aria-hidden="true"> *</span>}
+        <label><span className="field-label">Preferred Room{form.service === "Room Booking" && <span aria-hidden="true"> *</span>}</span>
           <select name="room" required={form.service === "Room Booking"} value={form.room} onChange={update}>
             <option value="">Select room</option>
             {rooms.map((room) => <option key={room.name}>{room.name}</option>)}
@@ -879,6 +877,7 @@ function Timeline() {
 
 function ReviewsTrust() {
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [reviewStatus, setReviewStatus] = useState("");
   const googleReviewsUrl = "https://www.google.com/travel/search?q=jaisalmer%20desert%20haveli%20on%20fort&g2lb=4965990%2C72471280%2C72560029%2C72573224%2C72647020%2C72686036%2C72803964%2C72882230%2C73064764%2C121529349%2C121738283%2C121762713&hl=en-IN&gl=in&cs=1&ssta=1&ts=CAEaRwopEicyJTB4Mzk0N2JjMjhhZTk0MjU3OToweGE1NTU0YmE3YjQxNDg5MGYSGhIUCgcI6g8QBxgPEgcI6g8QBxgQGAEyAhAA&qs=CAEyFENnc0lqNUxTb1B2MDBxcWxBUkFCOAJCCQkPiRS0p0tVpUIJCQ-JFLSnS1Wl&ap=ugEHcmV2aWV3cw&ictx=111&ved=0CAAQ5JsGahcKEwio_cnhqtSVAxUAAAAAHQAAAAAQAw";
@@ -937,7 +936,7 @@ function ReviewsTrust() {
         <div className="review-actions">
           <div className="rating-picker" role="group" aria-label="Choose your rating">
             {[1, 2, 3, 4, 5].map((value) => (
-              <button key={value} type="button" className={value <= rating ? "selected" : ""} onClick={() => setRating(value)} aria-label={`${value} star${value === 1 ? "" : "s"}`} aria-pressed={value <= rating}>★</button>
+              <button key={value} type="button" className={value <= (hoverRating || rating) ? "selected" : ""} onMouseEnter={() => setHoverRating(value)} onMouseLeave={() => setHoverRating(0)} onFocus={() => setHoverRating(value)} onBlur={() => setHoverRating(0)} onClick={() => setRating(value)} aria-label={`${value} star${value === 1 ? "" : "s"}`} aria-pressed={value <= rating}>★</button>
             ))}
           </div>
           <label className="review-input-label" htmlFor="guest-review">Your review</label>
@@ -995,7 +994,7 @@ function FAQ() {
     mainEntity: faqs.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } }))
   };
   return (
-    <section className="section faq">
+    <section className="section faq" id="faq">
       <script type="application/ld+json">{JSON.stringify(schema)}</script>
       <Reveal><SectionTitle title="FAQ" /></Reveal>
       <div className="faq-list">
@@ -1061,10 +1060,56 @@ function Schemas() {
   return <script type="application/ld+json">{JSON.stringify(localBusiness)}</script>;
 }
 
-function App() {
+function LegalPage({ type }) {
+  const content = {
+    privacy: {
+      title: "Privacy Notice",
+      intro: "This notice explains how Desert Haveli Guest House handles information shared through this website.",
+      sections: [
+        ["Information you share", "When you use the booking enquiry form, WhatsApp link, email link, or phone links, you may choose to share contact details, travel dates, guest count, room preference, and your message."],
+        ["How enquiries are handled", "Enquiries are sent to the hotel through WhatsApp or your email application for availability and booking communication. This website does not provide an online payment or reservation-completion service."],
+        ["Third-party services", "The website links to third-party services including WhatsApp, Google Maps, Google Reviews, and Tripadvisor. Their handling of your information is governed by their own policies."],
+        ["Contact", "For questions about an enquiry or the information you have shared, contact the hotel using the phone number, WhatsApp link, or email address shown on this website."]
+      ]
+    },
+    terms: {
+      title: "Terms and Conditions",
+      intro: "These website terms describe the enquiry process for Desert Haveli Guest House.",
+      sections: [
+        ["Enquiries are not confirmed bookings", "Submitting a website enquiry, WhatsApp message, or email does not reserve a room. Availability, final pricing, booking confirmation, and applicable stay conditions are confirmed directly by the hotel."],
+        ["Information on this website", "Room, facility, restaurant, travel-assistance, and experience information is provided for general guest planning. Guests should confirm current availability and final details with the hotel before making travel arrangements."],
+        ["Guest check-in", "Guests are asked to carry valid identification and complete the hotel's check-in formalities on arrival."],
+        ["Contact", "For booking questions or clarification of stay conditions, contact the hotel directly using the contact details shown on this website."]
+      ]
+    },
+    cancellation: {
+      title: "Cancellation Policy",
+      intro: "This website accepts booking enquiries rather than online reservations or payments.",
+      sections: [
+        ["Before confirmation", "An enquiry sent through this website, WhatsApp, or email is not a confirmed booking. Guests should contact the hotel directly if their travel dates change."],
+        ["Confirmed bookings", "Cancellation terms, any applicable deadlines, and any payment-related conditions are confirmed directly by the hotel when a booking is confirmed."],
+        ["Changes to travel plans", "For amendments or cancellations, contact the hotel as soon as possible using the WhatsApp, phone, or email details on this website and provide the booking details supplied at confirmation."],
+        ["Contact", "The hotel can confirm the cancellation status of a direct booking and any terms that apply to that booking."]
+      ]
+    }
+  }[type];
+
+  return (
+    <section className="section legal-page">
+      <SectionTitle title={content.title}>{content.intro}</SectionTitle>
+      <div className="faq-list">
+        {content.sections.map(([heading, text]) => <article key={heading}><h2>{heading}</h2><p>{text}</p></article>)}
+      </div>
+    </section>
+  );
+}
+
+function App({ initialSection, legalPage, pageMetadata }) {
   const [rooms, setRooms] = useState([]);
   const [galleryImages, setGalleryImages] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(true);
+  const [galleryLoading, setGalleryLoading] = useState(true);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
   const [roomsError, setRoomsError] = useState("");
 
   useEffect(() => {
@@ -1086,8 +1131,67 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!initialSection || legalPage) return undefined;
+    let stoppedByVisitor = false;
+    const scrollToInitialSection = () => document.getElementById(initialSection)?.scrollIntoView({ block: "start" });
+    const stopForVisitorInput = () => { stoppedByVisitor = true; };
+    const frame = requestAnimationFrame(scrollToInitialSection);
+    const settleTimer = window.setInterval(() => { if (stoppedByVisitor) return; scrollToInitialSection(); }, 400);
+    const stopTimer = window.setTimeout(() => window.clearInterval(settleTimer), 10_000);
+    window.addEventListener("pointerdown", stopForVisitorInput, { once: true });
+    window.addEventListener("wheel", stopForVisitorInput, { once: true, passive: true });
+    window.addEventListener("touchstart", stopForVisitorInput, { once: true, passive: true });
+    window.addEventListener("keydown", stopForVisitorInput, { once: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(settleTimer);
+      window.clearTimeout(stopTimer);
+      window.removeEventListener("pointerdown", stopForVisitorInput);
+      window.removeEventListener("wheel", stopForVisitorInput);
+      window.removeEventListener("touchstart", stopForVisitorInput);
+      window.removeEventListener("keydown", stopForVisitorInput);
+    };
+  }, [initialSection, legalPage]);
+
+  useEffect(() => {
+    if (!initialSection || legalPage || roomsLoading || galleryLoading || sectionsLoading) return undefined;
+    const frame = requestAnimationFrame(() => document.getElementById(initialSection)?.scrollIntoView({ block: "start" }));
+    return () => cancelAnimationFrame(frame);
+  }, [initialSection, legalPage, roomsLoading, galleryLoading, sectionsLoading]);
+
+  useEffect(() => {
+    if (!pageMetadata) return;
+    const setMeta = (selector, attributes) => {
+      let element = document.head.querySelector(selector);
+      if (!element) {
+        element = document.createElement("meta");
+        Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+        document.head.appendChild(element);
+      }
+      element.setAttribute("content", attributes.content);
+    };
+    document.title = pageMetadata.title;
+    setMeta('meta[name="description"]', { name: "description", content: pageMetadata.description });
+    setMeta('meta[property="og:title"]', { property: "og:title", content: pageMetadata.title });
+    setMeta('meta[property="og:description"]', { property: "og:description", content: pageMetadata.description });
+    setMeta('meta[property="og:url"]', { property: "og:url", content: window.location.href });
+    setMeta('meta[name="twitter:title"]', { name: "twitter:title", content: pageMetadata.title });
+    setMeta('meta[name="twitter:description"]', { name: "twitter:description", content: pageMetadata.description });
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = window.location.href;
+  }, [pageMetadata]);
+
+  useEffect(() => {
     let cancelled = false;
-    fetchPublicGalleryImages().then((items) => { if (!cancelled) setGalleryImages(items); }).catch(() => {});
+    fetchPublicGalleryImages()
+      .then((items) => { if (!cancelled) setGalleryImages(items); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setGalleryLoading(false); });
     return () => { cancelled = true; };
   }, []);
 
@@ -1097,7 +1201,7 @@ function App() {
       if (cancelled) return;
       items.forEach((item) => { sectionContent[item.section_key] = { ...sectionContent[item.section_key], ...item }; });
       setRooms((current) => [...current]);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => { if (!cancelled) setSectionsLoading(false); });
     return () => { cancelled = true; };
   }, []);
 
@@ -1121,23 +1225,26 @@ function App() {
   return (
     <>
       <Schemas />
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <Navbar />
-      <main>
-        <Hero />
-        <BookingBar rooms={rooms} />
-        <Showcase />
-        <About />
-        <Rooms rooms={rooms} loading={roomsLoading} error={roomsError} />
-        <Restaurant />
-        <Facilities />
-        <Experiences />
-        <Safari />
-        <Gallery uploadedImages={galleryImages} />
-        <Nearby />
-        <BookingForm rooms={rooms} />
-        <ReviewsTrust />
-        <Contact />
-        <FAQ />
+      <main id="main-content" tabIndex="-1">
+        {legalPage ? <LegalPage type={legalPage} /> : <>
+          <Hero />
+          <BookingBar rooms={rooms} />
+          <Showcase />
+          <About />
+          <Rooms rooms={rooms} loading={roomsLoading} error={roomsError} />
+          <Restaurant />
+          <Facilities />
+          <Experiences />
+          <Safari />
+          <Gallery uploadedImages={galleryImages} />
+          <Nearby />
+          <BookingForm rooms={rooms} />
+          <ReviewsTrust />
+          <Contact />
+          <FAQ />
+        </>}
       </main>
       <Footer />
     </>

@@ -6,7 +6,11 @@ const required = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "
 
 function config() {
   const missing = required.filter((key) => !process.env[key]);
-  if (missing.length) throw new Error(`Missing Cloudflare R2 configuration: ${missing.join(", ")}`);
+  if (missing.length) {
+    const error = new Error("Media provider unavailable");
+    error.statusCode = 503;
+    throw error;
+  }
   return {
     bucket: process.env.R2_BUCKET_NAME,
     publicBaseUrl: (process.env.R2_PUBLIC_BASE_URL || "").replace(/\/$/, ""),
@@ -40,7 +44,7 @@ export async function requireAdmin(req) {
 
 export async function presign(req, key, contentType, size) {
   const { bucket, client } = config();
-  if (!key || !contentType || !Number.isFinite(size) || size <= 0) throw new Error("Invalid media request");
+  if (!key || !contentType || !Number.isSafeInteger(size) || size <= 0) throw new Error("Invalid media request");
   const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size });
   return getSignedUrl(client, command, { expiresIn: 300 });
 }
